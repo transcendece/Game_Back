@@ -9,7 +9,7 @@ import {
     WebSocketServer 
 } from "@nestjs/websockets";
 
-import Matter ,{ 
+import { 
     Engine, 
     Render, 
     Bodies, 
@@ -17,7 +17,11 @@ import Matter ,{
     Runner, 
     Body
 } from 'matter-js';
-
+import { JwtService } from "@nestjs/jwt";
+import { UsersRepository } from "src/modules/users/users.repository";
+import { GameDto, ballDto, playerDto } from "src/DTOs/game/game.dto";
+// import { Record } from "@prisma/client/runtime/library";
+// import { Render } from 'planck-js';
 
 
 
@@ -55,7 +59,11 @@ interface Game  {
     state: boolean
 }
 
-interface GameDependency  {
+interface gameDependency{
+    gravity: {x: number, y: number, scale: number}
+}
+
+interface gameObjects  {
     ball: Ball,
     player1: Player,
     player2: Player,
@@ -79,29 +87,28 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
 
     private clients: Record<string, Socket> = {};
     private games: Record<string, Game> = {};
-    private gamesProperties:  Record<string, GameDependency > = {}
+    private gamesProperties:  Record<string, GameDto > = {}
     private RandomGame: string[] = [];
 
-    constructor(){};
+    constructor(private jwtService: JwtService, private user: UsersRepository){};
     async handleConnection(client: Socket, ...args: any[]) {
         console.log('client connected:', client.id);
-        this.clients[client.id] = client;
+        try {
+            const jwt:any = client.handshake.headers.jwt;
+            const user = this.jwtService.verify(jwt);
+            console.log(user);
+            const test = await this.user.getUserById(user.sub);
+            if (test){
+                this.clients[test.id] = client;
+            } else {
+                console.log("user dosen't exist in database");
+                client.emit('ERROR', "ERROR")
+                client.disconnect();
+            }
+        } catch (error) {
+            console.log("invalid data : check JWT or DATABASE QUERIES")
+        }
     }
-
-    onModuleInit() {
-        this.server.on('connection', (socket) => {
-            this.clients[socket.id] = socket;
-            console.log(`${socket.id}  Connected`);
-            this.clients[socket.id].emit("connection", {
-                "method": "connect",
-                "clientId": socket.id,
-            });
-
-            socket.on('disconnect', () => {
-                delete this.clients[socket.id];
-            });
-        });
-    };
     
     handleDisconnect(client: Socket) {
         console.log('Client disconnected:', client.id);
@@ -123,15 +130,24 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
             "player2Id": player2 || null,
             "state" : state, //the state of game, true is running
         };
-        this.gamesProperties[gameId] = {
-            height : gameHeight,
-            width: gameWidth,
-            ball: { x: gameWidth / 2 , y : gameHeight / 2 ,velocityX : 1,velocityY : 2 ,},
-           player1 :{ x : playerWidth, y : gameHeight / 2 ,score : 0,},
-            player2:{ x: gameWidth - playerWidth - 10, y: gameHeight / 2, score: 0,},
-            playerHeight: playerHeight,
-            playerWidth:playerWidth,
-        };
+        // this.gamesProperties[gameId] = {
+        //     height : gameHeight,
+        //     width: gameWidth,
+        //     ball: { x: gameWidth / 2 , y : gameHeight / 2 ,velocityX : 1,velocityY : 2 ,},
+        //    player1 :{ x : playerWidth, y : gameHeight / 2 ,score : 0,},
+        //     player2:{ x: gameWidth - playerWidth - 10, y: gameHeight / 2, score: 0,},
+        //     playerHeight: playerHeight,
+        //     playerWidth:playerWidth,
+        // };
+        this.gamesProperties[gameId] = new GameDto(
+            gameId, 
+            new playerDto(player1, playerWidth, 0),
+            new playerDto(player2, gameWidth - playerWidth, 0),
+            new ballDto(gameWidth / 2, gameHeight / 2, 1, 2),
+            gameHeight,
+            gameWidth,
+            playerWidth,playerHeight
+            )
         if (!state){
         this.clients[player1].emit("message", {
             "method": "create",
@@ -146,13 +162,15 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
         this.games[gameId].state = true;
         this.clients[p1].emit("message", {
             "method": "play",
-            "game": this.games[gameId],
-            // "gameDependency": this.gamesProperties[gameId],
+            // "game": this.games[gameId],
+            "gameDependency": "",
+            "gameObjects": this.gamesProperties[gameId],
         })
         this.clients[p2].emit("message", {
             "method": "play",
-            "game": this.games[gameId],
-            // "gameDependency": this.gamesProperties[gameId],
+            // "game": this.games[gameId],
+            "gameDependency": '',
+            "gameObjects": this.gamesProperties[gameId],
         })
     }
 
@@ -187,99 +205,50 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
             this.sendPlayDemand(player1, player2, res.gameId);
         }
 
-        if (res.method === "play"){
-            console.log("play request :");
-            console.log("clientId :  "+ res.clientId);
-            console.log("game :  "+ res.gameId);
-            const gameId = res.gameId
-            this.games
-        }
+        // if (res.method === "play"){
+        //     console.log("play request :");
+        //     console.log("clientId :  "+ res.clientId);
+        //     console.log("game :  "+ res.gameId);
+        //     const gameId = res.gameId
+        //     this.games
+        // }
 
-        if (res.method === "update"){
+        // if (res.method === "update"){
             
-        }
+        // }
     };
 
 
 
-    private engine = Engine.create({
+    engine = Engine.create({
         gravity: {x: 0, y: 0, scale: 0.001},
         positionIterations: 10,
         velocityIterations: 8,
     })
 
+    // render = Render.create({
+    //     element: null,
+    //     engine: this.engine,
+    //     options:{
+    //         background: '#000000',
+    //         width: gameWidth,
+    //         height: gameHeight,
+    //         wireframes: false,
+    //     }
+    // });;
     private topground: Body = Bodies.rectangle(0, 0, 1200, 10, { isStatic: true });
     private downground: Body = Bodies.rectangle(0, 800, 1200, 10, { isStatic: true });
     private leftground: Body = Bodies.rectangle(0, 0, 10, 1600, { isStatic: true });
     private rightground: Body = Bodies.rectangle(600, 0, 10, 1600, { isStatic: true });
-    private ball : Body = Bodies.circle(gameWidth / 2, gameHeight / 2, 10, { 
+    private ball: Body = Bodies.circle(gameWidth / 2, gameHeight / 2, 10, { 
         restitution: 1,
         frictionAir: 0,
         friction:0,
         inertia: Infinity,
         render:{
             fillStyle: "red"
-        },
-        velocity:{x: 5, y:5}
-    });
-    // Matter.Body.setVelocity(ball, { x: 5, y: 5 });
-    
-    private player1 : Body = Bodies.rectangle(gameWidth / 2, 20, playerWidth, playerHeight, {
-        isStatic: true,
-        chamfer: { radius: 10},
-        render:{
-            fillStyle: "purple"
-        },
-    });
-    
-    private player2 : Body = Bodies.rectangle(gameWidth / 2, 780, playerWidth, playerHeight, { 
-        isStatic: true,
-        chamfer: { radius: 10},
-        render:{
-            fillStyle: "blue"
         }
     });
-
-    private maxVelocity: number = 10;
-    private generateCollision = () => {
-        Matter.Events.on(this.engine, "collisionStart", (event) =>{
-            event.pairs.forEach((pair)=>{
-                const bodyA = pair.bodyA;
-                const bodyB = pair.bodyB;
-
-                if (bodyA === this.ball || bodyB == this.ball){
-                    const normal = pair.collision.normal;
-                    const Threshold = 0.1;
-                    if (Math.abs(normal.x) < Threshold){
-                        const sign = Math.sign(this.ball.velocity.x);
-                        const i = 0.5;
-                        Body.setVelocity(this.ball, {
-                            x: Math.min(this.ball.velocity.x + sign * i , this.maxVelocity),
-                            y : this.ball.velocity.y
-                        })
-                        const restitution = 1; // Adjust this value for desired bounciness
-                        const friction = 0; // Adjust this value for desired friction
-                            
-                        // Set restitution and friction for the this.ball
-                        Body.set(this.ball, { restitution, friction });
-                            
-                        // Set restitution and friction for the other body (if it's not static)
-                        const otherBody = bodyA === this.ball ? bodyB : bodyA;
-                        if (!otherBody.isStatic) {
-                            Body.set(otherBody, { restitution, friction });
-                        }
-                        if (otherBody === this.topground || otherBody === this.downground){
-                            if (otherBody === this.topground)score1++;
-                            else score2++;
-                            Body.setPosition(this.ball, { x: gameWidth / 2, y: gameHeight });
-                            Body.setVelocity(this.ball, { x: 5, y: -5 });
-                        }
-                            
-                    }
-                }
-            });
-        }); 
-    }
 
 
 
