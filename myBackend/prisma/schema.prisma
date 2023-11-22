@@ -1,0 +1,62 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource database {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    String @id @default(uuid())
+  firstName             String
+  lastName              String
+  login                 String ?
+  email                 String ? @unique
+  myInvitedFriends      Friend[] @relation("inviteSender")
+  invitedByFriends      Friend[] @relation("inviteReciever")
+  sentConversations     Conversation[] @relation("sender")
+  recievedConversations Conversation[] @relation("reciever")
+  MatchA                Match[] @relation("playerA")
+  MatchB                Match[] @relation("playerB")
+}
+
+model Friend {
+  id                    String @id @default(uuid())
+  inviteRecieverId      String
+  inviteSenderId        String
+  inviteReciever        User @relation("inviteReciever", fields: [inviteRecieverId], references: [id])
+  inviteSender          User @relation("inviteSender", fields: [inviteSenderId], references: [id])
+  latestMessage         String?
+  latestMessageDate     DateTime?
+}
+
+model Conversation {
+  id                    String @id @default(uuid())
+  userAId               String
+  userBId               String
+  userA                 User  @relation("sender", fields: [userAId], references: [id])
+  userB                 User  @relation("reciever", fields: [userBId], references: [id])
+  messages              Message[]
+}
+
+model Message {
+  id                    String @id @default(uuid())
+  conversationId        String
+  time                  DateTime
+  recieved              Boolean @default(false)
+  conversation          Conversation @relation(fields: [conversationId], references: [id])
+}
+
+model Match {
+  id                    String @id @default(uuid())
+  playerAId             String
+  playerBId             String
+  playerA               User  @relation("playerA", fields: [playerAId], references: [id])
+  playerB               User  @relation("playerB", fields: [playerBId], references: [id])
+  playerASore           Int
+  playerBSore           Int
+}
