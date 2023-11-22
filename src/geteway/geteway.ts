@@ -18,6 +18,8 @@ import Matter ,{
     Body
 } from 'matter-js';
 
+import { GameDependency, GameDto, ballDto, playerDto } from "src/DTOs/game.dto";
+
 
 
 
@@ -79,8 +81,9 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
 
     private clients: Record<string, Socket> = {};
     private games: Record<string, Game> = {};
-    private gamesProperties:  Record<string, GameDependency > = {}
+    private gamesProperties:  Record<string, GameDto > = {}
     private RandomGame: string[] = [];
+    private gameDependency: GameDependency = new GameDependency(0 , 0, 0.001 , 10, 8, '#000000', false, 1, 0, 0, Infinity, "red", 5, 5, 10, 'blue');
 
     constructor(){};
     async handleConnection(client: Socket, ...args: any[]) {
@@ -123,19 +126,18 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
             "player2Id": player2 || null,
             "state" : state, //the state of game, true is running
         };
-        this.gamesProperties[gameId] = {
-            height : gameHeight,
-            width: gameWidth,
-            ball: { x: gameWidth / 2 , y : gameHeight / 2 ,velocityX : 1,velocityY : 2 ,},
-           player1 :{ x : playerWidth, y : gameHeight / 2 ,score : 0,},
-            player2:{ x: gameWidth - playerWidth - 10, y: gameHeight / 2, score: 0,},
-            playerHeight: playerHeight,
-            playerWidth:playerWidth,
-        };
+        this.gamesProperties[gameId] = new GameDto(
+            gameId, 
+            new playerDto(player1, playerWidth, 0),
+            new playerDto(player2, gameWidth - playerWidth, 0),
+            new ballDto(gameWidth / 2, gameHeight / 2, 1, 2),
+            gameHeight,
+            gameWidth,
+        );
         if (!state){
         this.clients[player1].emit("message", {
             "method": "create",
-            "game" : this.games[gameId],
+            "gameDTO" : this.gamesProperties[gameId],
         });}
         else
             this.sendPlayDemand(player1, player2, gameId);
@@ -144,15 +146,16 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
 
     private sendPlayDemand(p1: string, p2: string, gameId: string){
         this.games[gameId].state = true;
+
         this.clients[p1].emit("message", {
             "method": "play",
-            "game": this.games[gameId],
-            // "gameDependency": this.gamesProperties[gameId],
+            "game": this.gamesProperties[gameId],
+            "gameDependency": this.gameDependency,
         })
         this.clients[p2].emit("message", {
             "method": "play",
-            "game": this.games[gameId],
-            // "gameDependency": this.gamesProperties[gameId],
+            "game": this.gamesProperties[gameId],
+            "gameDependency": this.gameDependency,
         })
     }
 
