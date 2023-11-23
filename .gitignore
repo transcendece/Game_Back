@@ -20,5 +20,5 @@
 *.flf
 #Test results file
 TestResults.xml
-node_modules
-dist
+myBackend/node_modules
+myBackend/dist

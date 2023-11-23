@@ -17,7 +17,6 @@ export declare class GameGeteway implements OnGatewayConnection, OnGatewayDiscon
     private gameDe;
     constructor();
     handleConnection(client: Socket, ...args: any[]): Promise<void>;
-    onModuleInit(): void;
     handleDisconnect(client: Socket): void;
     private createNewGame;
     private sendPlayDemand;
@@ -28,6 +27,7 @@ export declare class GameGeteway implements OnGatewayConnection, OnGatewayDiscon
         gameId: string;
     }): void;
     private engine;
+    private render;
     private topground;
     private downground;
     private leftground;
@@ -35,4 +35,6 @@ export declare class GameGeteway implements OnGatewayConnection, OnGatewayDiscon
     private ball;
     private player1;
     private player2;
+    private addElementsToEngine;
+    private updateElements;
 }

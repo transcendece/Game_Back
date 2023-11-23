@@ -45,6 +45,14 @@ let GameGeteway = class GameGeteway {
             positionIterations: 10,
             velocityIterations: 8,
         });
+        this.render = matter_js_1.Render.create({
+            engine: this.engine,
+            options: {
+                width: gameWidth,
+                height: gameHeight,
+                wireframes: this.gameDe.renderOptions.wireframe,
+            }
+        });
         this.topground = matter_js_1.Bodies.rectangle(0, 0, 1200, 10, { isStatic: true });
         this.downground = matter_js_1.Bodies.rectangle(0, 800, 1200, 10, { isStatic: true });
         this.leftground = matter_js_1.Bodies.rectangle(0, 0, 10, 1600, { isStatic: true });
@@ -78,21 +86,8 @@ let GameGeteway = class GameGeteway {
     async handleConnection(client, ...args) {
         console.log('client connected:', client.id);
         this.clients[client.id] = client;
+        client.emit("connection", { "clientId": client.id });
     }
-    onModuleInit() {
-        this.server.on('connection', (socket) => {
-            this.clients[socket.id] = socket;
-            console.log(`${socket.id}  Connected`);
-            this.clients[socket.id].emit("connection", {
-                "method": "connect",
-                "clientId": socket.id,
-            });
-            socket.on('disconnect', () => {
-                delete this.clients[socket.id];
-            });
-        });
-    }
-    ;
     handleDisconnect(client) {
         console.log('Client disconnected:', client.id);
         delete this.clients[client.id];
@@ -170,6 +165,17 @@ let GameGeteway = class GameGeteway {
         }
     }
     ;
+    addElementsToEngine() {
+        matter_js_1.Composite.add(this.engine.world, [this.ball, this.player1, this.player2, this.topground, this.downground, this.leftground, this.rightground]);
+        matter_js_1.Render.run(this.render);
+        matter_js_1.Runner.run(matter_js_1.Runner.create(), this.engine);
+    }
+    updateElements(velocityX, velocityY, ballX, ballY, player1X, player1Y, player2X, player2Y) {
+        matter_js_1.Body.setPosition(this.player1, { x: player1X, y: player1Y });
+        matter_js_1.Body.setPosition(this.player1, { x: player2X, y: player2Y });
+        matter_js_1.Body.setPosition(this.ball, { x: ballX, y: ballY });
+        matter_js_1.Body.setVelocity(this.ball, { x: velocityX, y: velocityY });
+    }
 };
 exports.GameGeteway = GameGeteway;
 __decorate([

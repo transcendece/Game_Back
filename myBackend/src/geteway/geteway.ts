@@ -19,6 +19,7 @@ import Matter ,{
 } from 'matter-js';
 
 import { GameDto, ballDto, ballOptions, engineOption, playerDto, playersOption, renderOptions } from "src/DTOs/game.dto";
+import { getHashes } from "crypto";
 
 
 
@@ -93,22 +94,8 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
     async handleConnection(client: Socket, ...args: any[]) {
         console.log('client connected:', client.id);
         this.clients[client.id] = client;
+        client.emit("connection", {"clientId":client.id })
     }
-
-    onModuleInit() {
-        this.server.on('connection', (socket) => {
-            this.clients[socket.id] = socket;
-            console.log(`${socket.id}  Connected`);
-            this.clients[socket.id].emit("connection", {
-                "method": "connect",
-                "clientId": socket.id,
-            });
-
-            socket.on('disconnect', () => {
-                delete this.clients[socket.id];
-            });
-        });
-    };
     
     handleDisconnect(client: Socket) {
         console.log('Client disconnected:', client.id);
@@ -215,6 +202,15 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
         velocityIterations: 8,
     })
 
+    private render: Render = Render.create({
+        engine: this.engine,
+        options:{
+            width: gameWidth,
+            height: gameHeight,
+            wireframes: this.gameDe.renderOptions.wireframe,
+        }
+    });
+
     private topground: Body = Bodies.rectangle(0, 0, 1200, 10, { isStatic: true });
     private downground: Body = Bodies.rectangle(0, 800, 1200, 10, { isStatic: true });
     private leftground: Body = Bodies.rectangle(0, 0, 10, 1600, { isStatic: true });
@@ -247,6 +243,18 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
         }
     });
 
+    private addElementsToEngine(){
+        Composite.add(this.engine.world, [this.ball, this.player1, this.player2, this.topground, this.downground, this.leftground, this.rightground]);
+        Render.run(this.render);
+        Runner.run(Runner.create(), this.engine);
+    }
+
+    private updateElements(velocityX: number,velocityY: number,ballX : number, ballY: number, player1X: number, player1Y: number, player2X: number, player2Y: number){
+        Body.setPosition(this.player1, {x: player1X, y: player1Y});
+        Body.setPosition(this.player1, {x: player2X, y: player2Y});
+        Body.setPosition(this.ball, {x: ballX, y: ballY});
+        Body.setVelocity(this.ball, {x : velocityX, y: velocityY});
+    }
     // private maxVelocity: number = 10;
     // private generateCollision = () => {
     //     Matter.Events.on(this.engine, "collisionStart", (event) =>{
