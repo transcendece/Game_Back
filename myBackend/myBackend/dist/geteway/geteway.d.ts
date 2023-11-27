@@ -27,7 +27,6 @@ export declare class GameGeteway implements OnGatewayConnection, OnGatewayDiscon
         gameId: string;
     }): void;
     private engine;
-    private render;
     private topground;
     private downground;
     private leftground;
@@ -37,4 +36,7 @@ export declare class GameGeteway implements OnGatewayConnection, OnGatewayDiscon
     private player2;
     private addElementsToEngine;
     private updateElements;
+    private maxVelocity;
+    private generateCollision;
+    checkForCollistion(): void;
 }

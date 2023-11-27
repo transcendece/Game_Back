@@ -9,11 +9,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.GetawayModule = void 0;
 const common_1 = require("@nestjs/common");
 const geteway_1 = require("./geteway");
+const schedule_1 = require("@nestjs/schedule");
 let GetawayModule = class GetawayModule {
 };
 exports.GetawayModule = GetawayModule;
 exports.GetawayModule = GetawayModule = __decorate([
     (0, common_1.Module)({
+        imports: [schedule_1.ScheduleModule.forRoot()],
         providers: [geteway_1.GameGeteway],
     })
 ], GetawayModule);

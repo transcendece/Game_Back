@@ -1,99 +1,3 @@
-
-export class playerDto{
-    
-    id : string;
-    paddleX: number;
-    score: number;
-    playerWidth: number;
-    playerHeight: number;
-    x: number;
-    y: number
-
-    constructor(x: number, y: number, id : string, paddleX: number, score: number){
-        this.x = x;
-        this.y = y;
-        this.id = id;
-        this.paddleX = paddleX;
-        this.score = score;
-    }
-    
-    public setPaddleX(newX: number){
-        this.paddleX = newX;
-    }
-    public IncrementScore(){this.score++;}
-    
-}
-
-export class ballDto{
-    constructor(x: number, y: number, velocityX: number, velocityY: number){
-        this.x = x;
-        this.y = y;
-        this.velocityX = velocityX;
-        this.velocityY = velocityY;
-    }
-    
-    public setPosition(x: number, y : number){
-        this.x = x;
-        this.y = y;
-    }
-    
-    public setVelocity(x: number, y : number){
-        this.velocityX = x;
-        this.velocityY = y;
-    }
-    
-    x: number;
-    y: number;
-    velocityX: number
-    velocityY: number
-}
-
-export class GameDto{
-    id: string;
-    player1: playerDto;
-    player2: playerDto;
-    ball : ballDto
-    height: number;
-    width: number;
-    
-    
-    constructor(
-        id: string,
-        player1: playerDto,
-        player2: playerDto,
-        ball : ballDto, 
-        height: number,
-        width: number,
-        ){
-            this.id = id;
-            this.player1 = player1;
-            this.player2 = player2;
-            this.ball = ball;
-            this.height = height;
-            this.width = width;
-        }
-        
-        public setDimention(height: number,width: number){
-            this.height = height;
-            this.width = width;
-        }
-        
-}
-
-/**
- * for Engine of fronte we need:
- *      gravity{x, y, sclae}numbers;
- *      positionIterations number;
- *      velocityIterations number
- * for Render :
- *      options{background: string, width, height, wireframe:bool}
- * 
- * for ball:
- *      options{restitution, frictionAir, friction, inertia, color, velocity{x, y}}
- * for players:
- *      options{isStatic, chamfer{raduis: 10}, color}
- */
-
 export class engineOption{
     gravityX: number;gravityY: number;gravityScale: number
     positionIterations : number;
@@ -139,7 +43,6 @@ export class ballOptions{
 }
 
 export class playersOption{
-
     chamferReduis: number;
     color: string;;
 
@@ -175,17 +78,16 @@ export class GameDependency{
         this.ballOptions = new ballOptions(restitution, frictionAir, friction, inertia, ballColor, velocityX, velocityY);
         this.playersOption = new playersOption(reduis, playerColor);
     }
-
-
-
-
-
 }
 
 
+export enum gameMods{
+    BEGINNER,
+    INTEMIDIER,
+    ADVANCED,
+}
 
-export class gameReq{
-    method: string;
-    gameDto: GameDto;
-    gameDepandency: {}
+export enum gameTypes{
+    TIME,
+    DEFI,
 }
