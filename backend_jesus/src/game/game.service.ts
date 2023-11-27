@@ -73,6 +73,7 @@ export class GameService{
             inertia: Infinity,
             label: "ball"
         });
+        Body.setVelocity(this.ball, {x: 5, y: 5});
         this.p1 = Bodies.rectangle(width / 2, 20, paddleWidth, paddleHeight, {
             isStatic: true,
             chamfer: { radius: 10},
@@ -101,7 +102,7 @@ export class GameService{
 
     public startGame(){
         console.log("START GAME ||||||||||||");
-        
+        // this.isRunning = true
         this.client1.emit("START", {
             "ball"  : this.ball.position,
             "p1"    : this.p1.position,
@@ -118,46 +119,51 @@ export class GameService{
             "score2": this.score2,
         });
 
-
-        Composite.add(this.engine.world, [this.p1, this.p2, ...this.grounds, ...this.obstacles]);
         Runner.run(this.runner, this.engine);
-        Events.on(this.engine, "collisionStart", event =>{
+        Composite.add(this.engine.world, [this.p1, this.p2 , ...this.grounds]);
+        this.spownBall();
+        this.checkBallPosition();
+        try
+        {Events.on(this.engine, "collisionStart", event =>{
+            console.log("testing ...");
+            
             let     stop : boolean = false; 
             event.pairs.forEach((pair)=>{
                 const bodyA :Body = pair.bodyA;
                 const bodyB : Body = pair.bodyB;
                 
                 if (bodyA === this.ball || bodyB == this.ball){
-                    const normal = pair.collision.normal;
-                    const Threshold = 0.1;
-                    if (Math.abs(normal.x) < Threshold){
-                        const sign = Math.sign(this.ball.velocity.x);
-                        const i = 0.5;
-                        Body.setVelocity(this.ball, {
-                            x: Math.min(this.ball.velocity.x + sign * i , maxVelocity),
-                            y : this.ball.velocity.y
-                        })
-                        const restitution = 1; // Adjust this value for desired bounciness
-                        const friction = 0; // Adjust this value for desired friction
+                    // const normal = pair.collision.normal;
+                    // const Threshold = 0.1;
+                    const otherBody = bodyA === this.ball ? bodyB : bodyA;
+                if (otherBody.label === "TOP" || otherBody.label === "DOWN"){
+                    // Composite.remove(this.engine.world, this.ball);
+                    // stop = true;
+                    // this.stop();
+                    if (otherBody.label === "TOP")          this.score1++;
+                    else if (otherBody.label === "DOWN")    this.score2++;
+                    Body.setPosition(this.ball, { x: 300, y: 400 });
+                    Body.setVelocity(this.ball, { x: 5, y: -5 });
+                }
+
+                    // if (Math.abs(normal.x) < Threshold){
+                        // const sign = Math.sign(this.ball.velocity.x);
+                        // const i = 0.5;
+                        // Body.setVelocity(this.ball, {
+                        //     x: Math.min(this.ball.velocity.x + sign * i , maxVelocity),
+                        //     y : this.ball.velocity.y
+                        // })
+                        // const restitution = 1; // Adjust this value for desired bounciness
+                        // const friction = 0; // Adjust this value for desired friction
                         
-                        // Set restitution and friction for the ball
-                        Body.set(this.ball, { restitution, friction });
+                        // // Set restitution and friction for the ball
+                        // Body.set(this.ball, { restitution, friction });
                         
                         // Set restitution and friction for the other body (if it's not static)
-                        const otherBody = bodyA === this.ball ? bodyB : bodyA;
-                        if (!otherBody.isStatic) {
-                            Body.set(otherBody, { restitution, friction });
-                        }
-                        if (otherBody.label === "TOP" || otherBody.label === "DOWN"){
-                            Composite.remove(this.engine.world, this.ball);
-                            stop = true;
-                            this.stop();
-                            if (otherBody.label === "TOP")          this.score1++;
-                            else if (otherBody.label === "DOWN")    this.score2++;
-                            Body.setPosition(this.ball, { x: 300, y: 400 });
-                            Body.setVelocity(this.ball, { x: 5, y: -5 });
-                        }
-                    }
+                        // if (!otherBody.isStatic) {
+                            //     Body.set(otherBody, { restitution, friction });
+                            // }
+                    // }
                 }
             });
             if (this.score1 === maxScore){
@@ -169,12 +175,23 @@ export class GameService{
                 this.client1.emit("WinOrLose", {content: "lose"})
                 this.client2.emit("WinOrLose", {content: "win"})
             }
-            if (stop) {
-                setTimeout(() => {
-                    this.spownBall();
-                }, 1000);
-            }
-        })
+            // if (stop) {
+            //     setTimeout(() => {
+            //         console.log("WEWE :", stop);
+                    
+            //         this.spownBall();
+            //     }, 1000);
+            // }
+        })}
+        catch (error) {
+            console.log("got an error ....");
+            
+        }
+
+        // console.log("ball ====> : ",this.ball.position);
+        // console.log("ball V ====> : ",this.ball.velocity);
+        // console.log("ball F====> : ",this.ball.force);
+        
         Events.on(this.engine, "afterUpdate", ()=>{
             this.client1.emit('UPDATE', {
                 "ball"  : this.ball.position,
@@ -212,12 +229,18 @@ export class GameService{
     }
 
 
-    reverseVector(vector: Vector): Vector {
+    public reverseVector(vector: Vector): Vector {
         return ({ x: width - vector.x, y: height - vector.y });
+    }
+
+    checkBallPosition(){
+        setInterval(()=>{
+        }, 1000/60);
     }
 
     spownBall(): void{
         if (!this.isRunning){
+            
             this.isRunning = !this.isRunning;
             Runner.run(this.runner,this.engine);
             return
@@ -225,20 +248,28 @@ export class GameService{
         let forceX : number = -1.3;
         let forceY : number = -1.2;
         if (this.serve){
+            
             forceX = 1.3;
             forceY = 1.2;
         }
+        console.log("Fx: ", forceX, " Fy: ", forceY);
         this.serve = !this.serve
-        this.ball = Bodies.circle(width / 2, height / 2, 10, { 
-            restitution: 1,
-            frictionAir: 0,
-            friction:0,
-            inertia: Infinity,
-            force:{x: forceX, y:forceY},
-            label: "ball"
-        });
+        // this.ball = Bodies.circle(width / 2, height / 2, 10, { 
+        //     restitution: 1,
+        //     frictionAir: 0,
+        //     friction:0,
+        //     inertia: Infinity,
+        //     force:{x: forceX, y:forceY},
+        //     label: "ball"
+        // });
+        // Body.setVelocity(this.ball, {x: forceX,y: forceY})
+        setTimeout(() =>{
+            // this.spownBall();
+            Composite.add(this.engine.world, this.ball);
+        }, 1000)
     }
 
+    
 
     public stop(){
         Runner.stop(this.runner);

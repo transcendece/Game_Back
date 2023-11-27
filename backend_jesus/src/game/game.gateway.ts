@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit } from "@nestjs/common";
 import { Server, Socket } from "socket.io";
 import { 
+    ConnectedSocket,
     MessageBody, 
     OnGatewayConnection, 
     OnGatewayDisconnect, 
@@ -48,8 +49,8 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
     @WebSocketServer()
     server: Server;
 
-    private clients: Record<string, Socket> = {};
-    private Random: Record<string, GameService> = {};
+    private clients:Map<string, Socket> = new Map<string, Socket>();
+    private Random: Map<string, GameService> = new Map<string, GameService>();
     private friendGame: Record<string, GameService> = {};
     // private gamesProperties:  Record<string, GameDto > = {}
     private randomQueue: string[] = [];
@@ -95,11 +96,28 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
     }
     
     @SubscribeMessage("UPDATE")
-    updatePaddle(@MessageBody() res: {clientId: string, gameId: string, vec: Vector }){
-        if (this.Random[res.gameId].player1Id === res.clientId)
+    updatePaddle(@MessageBody() res: {clientId: string, gameId: string, vec: Vector }, @ConnectedSocket() client : Socket){
+        // console.log("RESPONSE : ", res);
+        if (res.clientId === this.Random[res.gameId].player1Id)
             Body.setPosition(this.Random[res.gameId].p1, res.vec)
-        else if (this.Random[res.gameId].player2Id === res.clientId)
+        else if (res.clientId === this.Random[res.gameId].player2Id)
             Body.setPosition(this.Random[res.gameId].p2, res.vec)
+
+        this.Random[res.gameId].client1.emit('UPDATE', {
+            "ball"  : this.Random[res.gameId].ball.position,
+            "p1"    : this.Random[res.gameId].p1.position,
+            "p2"    : this.Random[res.gameId].p2.position,
+            "score1": this.Random[res.gameId].score1,
+            "score2": this.Random[res.gameId].score2,
+        });
+
+        this.Random[res.gameId].client2.emit('UPDATE', {
+            "ball"  : this.Random[res.gameId].reverseVector(this.Random[res.gameId].ball.position),
+            "p1"    : this.Random[res.gameId].reverseVector(this.Random[res.gameId].p1.position),
+            "p2"    : this.Random[res.gameId].reverseVector(this.Random[res.gameId].p2.position),
+            "score1": this.Random[res.gameId].score1,
+            "score2": this.Random[res.gameId].score2,
+        });
     }
     
 
@@ -109,10 +127,15 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
     private createNewGame(player1: string, player2?: string){
         let state = player2 === undefined  ? false : true;
         console.log(`state: ${state} p2: ${player2}`);
-        
+         
         const gameId = randomString(20);
         console.log("game id : " + gameId);
         console.log("user : " + player1);
+        if (!player1) {
+            console.log("hhhhh");
+            return;
+            
+        }
         this.Random[gameId] =  new GameService( this.clients[player1] , gameId , gameMaps.BEGINNER ,gameMods.DEFI)
         
         if (!state)
@@ -129,10 +152,13 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
     
         this.clients[p1].emit("PLAY", {
             gameDependency: this.gameDe,
+            gameId: gameId,
         })
         this.clients[p2].emit("PLAY", {
             gameDependency: this.gameDe,
+            gameId: gameId,
         })
+        // console.log("just a check : ", this.Random[gameId].ball);
         this.Random[gameId].startGame();
     }
     
@@ -142,10 +168,13 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
         if (this.randomQueue.length >= 2) {
             const player1 = this.randomQueue.shift();
             const player2 = this.randomQueue.shift();
+            console.log("========>     ",player1, player2);
+            
             this.createNewGame(player1, player2);
         }
     }
 }
+
 
 
 
