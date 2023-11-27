@@ -98,10 +98,12 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
     @SubscribeMessage("UPDATE")
     updatePaddle(@MessageBody() res: {clientId: string, gameId: string, vec: Vector }, @ConnectedSocket() client : Socket){
         // console.log("RESPONSE : ", res);
+        console.log("RES UPDATE: ", res);
+        
         if (res.clientId === this.Random[res.gameId].player1Id)
-            Body.setPosition(this.Random[res.gameId].p1, res.vec)
+           { console.log("PLAYER1: BEFORE: ", this.Random[res.gameId].p1.position);Body.setPosition(this.Random[res.gameId].p1, res.vec);console.log("PLAYER1: ", this.Random[res.gameId].p1.position);}
         else if (res.clientId === this.Random[res.gameId].player2Id)
-            Body.setPosition(this.Random[res.gameId].p2, res.vec)
+            {console.log("PLAYER2: BEFORE: ", this.Random[res.gameId].p2.position);Body.setPosition(this.Random[res.gameId].p2, this.Random[res.gameId].reverseVector(res.vec)); console.log("PLAYER2: ", this.Random[res.gameId].p2.position);}
 
         this.Random[res.gameId].client1.emit('UPDATE', {
             "ball"  : this.Random[res.gameId].ball.position,

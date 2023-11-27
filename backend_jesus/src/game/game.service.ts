@@ -136,15 +136,15 @@ export class GameService{
                     // const normal = pair.collision.normal;
                     // const Threshold = 0.1;
                     const otherBody = bodyA === this.ball ? bodyB : bodyA;
-                if (otherBody.label === "TOP" || otherBody.label === "DOWN"){
-                    // Composite.remove(this.engine.world, this.ball);
-                    // stop = true;
-                    // this.stop();
-                    if (otherBody.label === "TOP")          this.score1++;
-                    else if (otherBody.label === "DOWN")    this.score2++;
-                    Body.setPosition(this.ball, { x: 300, y: 400 });
-                    Body.setVelocity(this.ball, { x: 5, y: -5 });
-                }
+                    if (otherBody.label === "TOP" || otherBody.label === "DOWN"){
+                        // Composite.remove(this.engine.world, this.ball);
+                        // stop = true;
+                        // this.stop();
+                        if (otherBody.label === "TOP")          this.score1++;
+                        else if (otherBody.label === "DOWN")    this.score2++;
+                        Body.setPosition(this.ball, { x: 300, y: 400 });
+                        Body.setVelocity(this.ball, { x: 5, y: -5 });
+                    }
 
                     // if (Math.abs(normal.x) < Threshold){
                         // const sign = Math.sign(this.ball.velocity.x);
