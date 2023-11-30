@@ -19,7 +19,7 @@ const height            :number = 800;
 const paddleWidth       :number = 125;
 const paddleHeight      :number = 20;
 const maxVelocity       :number = 10;
-const maxScore          :number = 10;
+const maxScore          :number = 4;
 const AdvObs            :Body[] = []
 const IntObs            :Body[] = []
 
@@ -100,21 +100,24 @@ export class GameService{
     }
 
 
+
     public startGame(){
         console.log("START GAME ||||||||||||");
         // this.isRunning = true
         this.client1.emit("START", {
+            "ID"    :1,
             "ball"  : this.ball.position,
             "p1"    : this.p1.position,
             "p2"    : this.p2.position,
             "score1": this.score1,
             "score2": this.score2,
         });
-
+        
         this.client2.emit("START", {
-            "ball"  : this.ball.position,
-            "p1"    : this.p1.position,
-            "p2"    : this.p2.position,
+            "ID"    :2,
+            "ball"  : this.reverseVector(this.ball.position),
+            "p1"    : this.reverseVector(this.p1.position),
+            "p2"    : this.reverseVector(this.p2.position),
             "score1": this.score1,
             "score2": this.score2,
         });
@@ -124,7 +127,8 @@ export class GameService{
         this.spownBall();
         this.checkBallPosition();
         try
-        {Events.on(this.engine, "collisionStart", event =>{
+        {
+            Events.on(this.engine, "collisionStart", event =>{
             console.log("testing ...");
             
             let     stop : boolean = false; 
@@ -133,47 +137,20 @@ export class GameService{
                 const bodyB : Body = pair.bodyB;
                 
                 if (bodyA === this.ball || bodyB == this.ball){
-                    // const normal = pair.collision.normal;
-                    // const Threshold = 0.1;
                     const otherBody = bodyA === this.ball ? bodyB : bodyA;
                     if (otherBody.label === "TOP" || otherBody.label === "DOWN"){
-                        // Composite.remove(this.engine.world, this.ball);
-                        // stop = true;
-                        // this.stop();
                         if (otherBody.label === "TOP")          this.score1++;
                         else if (otherBody.label === "DOWN")    this.score2++;
                         Body.setPosition(this.ball, { x: 300, y: 400 });
                         Body.setVelocity(this.ball, { x: 5, y: -5 });
                     }
-
-                    // if (Math.abs(normal.x) < Threshold){
-                        // const sign = Math.sign(this.ball.velocity.x);
-                        // const i = 0.5;
-                        // Body.setVelocity(this.ball, {
-                        //     x: Math.min(this.ball.velocity.x + sign * i , maxVelocity),
-                        //     y : this.ball.velocity.y
-                        // })
-                        // const restitution = 1; // Adjust this value for desired bounciness
-                        // const friction = 0; // Adjust this value for desired friction
-                        
-                        // // Set restitution and friction for the ball
-                        // Body.set(this.ball, { restitution, friction });
-                        
-                        // Set restitution and friction for the other body (if it's not static)
-                        // if (!otherBody.isStatic) {
-                            //     Body.set(otherBody, { restitution, friction });
-                            // }
-                    // }
                 }
             });
-            if (this.score1 === maxScore){
-                this.client1.emit("WinOrLose", {content: "win"})
-                this.client2.emit("WinOrLose", {content: "lose"})
-            }
-            else if (this.score2 === maxScore){
-                
-                this.client1.emit("WinOrLose", {content: "lose"})
-                this.client2.emit("WinOrLose", {content: "win"})
+            if (this.score1 === maxScore || this.score2 === maxScore ){
+                let winner = this.score1 === maxScore ? this.client1 : this.client2;
+                let loser = this.score1 === maxScore ? this.client2 : this.client1;
+                winner.emit("WinOrLose", {content: "win"})
+                loser.emit("WinOrLose", {content: "lose"})
             }
             // if (stop) {
             //     setTimeout(() => {
@@ -208,6 +185,9 @@ export class GameService{
                 "score1": this.score1,
                 "score2": this.score2,
             });
+            console.log("1 PLAYERs POS: ", this.p1.position, this.p2.position);
+            console.log("2 PLAYERs POS: ", this.reverseVector(this.p1.position), this.reverseVector(this.p2.position));
+            
         });
 
     }   
@@ -228,7 +208,15 @@ export class GameService{
         return this.client2;
     }
 
-
+    public ifPlayerInGame(id : string) : boolean{
+        console.log("id = ", id);
+        console.log("p1 = ", this.player1Id);
+        console.log("p2 = ", this.player2Id);
+        
+        if (id === this.player1Id || id === this.player2Id)
+            return true;
+        return false;
+    }
     public reverseVector(vector: Vector): Vector {
         return ({ x: width - vector.x, y: height - vector.y });
     }
@@ -273,6 +261,7 @@ export class GameService{
 
     public stop(){
         Runner.stop(this.runner);
+        Engine.clear(this.engine);
         this.isRunning = false;
     }
 
