@@ -74,11 +74,11 @@ export class GameService{
             label: "ball"
         });
         Body.setVelocity(this.ball, {x: 5, y: 5});
-        this.p1 = Bodies.rectangle(width / 2, 20, paddleWidth, paddleHeight, {
+        this.p1 = Bodies.rectangle(width / 2, 780, paddleWidth, paddleHeight, {
             isStatic: true,
             chamfer: { radius: 10},
         });
-        this.p2 = Bodies.rectangle(width / 2, 780, paddleWidth, paddleHeight, { 
+        this.p2 = Bodies.rectangle(width / 2, 20, paddleWidth, paddleHeight, { 
             isStatic: true,
             chamfer: { radius: 10},
         });
@@ -139,8 +139,8 @@ export class GameService{
                 if (bodyA === this.ball || bodyB == this.ball){
                     const otherBody = bodyA === this.ball ? bodyB : bodyA;
                     if (otherBody.label === "TOP" || otherBody.label === "DOWN"){
-                        if (otherBody.label === "TOP")          this.score1++;
-                        else if (otherBody.label === "DOWN")    this.score2++;
+                        if (otherBody.label === "TOP")          this.score2++;
+                        else if (otherBody.label === "DOWN")    this.score1++;
                         Body.setPosition(this.ball, { x: 300, y: 400 });
                         Body.setVelocity(this.ball, { x: 5, y: -5 });
                     }
@@ -149,8 +149,9 @@ export class GameService{
             if (this.score1 === maxScore || this.score2 === maxScore ){
                 let winner = this.score1 === maxScore ? this.client1 : this.client2;
                 let loser = this.score1 === maxScore ? this.client2 : this.client1;
-                winner.emit("WinOrLose", {content: "win"})
-                loser.emit("WinOrLose", {content: "lose"})
+                winner.emit("WinOrLose", {content: "win"});
+                loser.emit("WinOrLose", {content: "lose"});
+                this.stop();
             }
             // if (stop) {
             //     setTimeout(() => {
