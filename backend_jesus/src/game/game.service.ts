@@ -102,7 +102,7 @@ export class GameService{
 
 
     public startGame(){
-        console.log("START GAME ||||||||||||");
+        // console.log("START GAME ||||||||||||");
         // this.isRunning = true
         this.client1.emit("START", {
             "ID"    :1,
@@ -129,7 +129,7 @@ export class GameService{
         try
         {
             Events.on(this.engine, "collisionStart", event =>{
-            console.log("testing ...");
+            // console.log("testing ...");
             
             let     stop : boolean = false; 
             event.pairs.forEach((pair)=>{
@@ -186,8 +186,8 @@ export class GameService{
                 "score1": this.score1,
                 "score2": this.score2,
             });
-            console.log("1 PLAYERs POS: ", this.p1.position, this.p2.position);
-            console.log("2 PLAYERs POS: ", this.reverseVector(this.p1.position), this.reverseVector(this.p2.position));
+            // console.log("1 PLAYERs POS: ", this.p1.position, this.p2.position);
+            // console.log("2 PLAYERs POS: ", this.reverseVector(this.p1.position), this.reverseVector(this.p2.position));
             
         });
 
@@ -210,10 +210,6 @@ export class GameService{
     }
 
     public ifPlayerInGame(id : string) : boolean{
-        console.log("id = ", id);
-        console.log("p1 = ", this.player1Id);
-        console.log("p2 = ", this.player2Id);
-        
         if (id === this.player1Id || id === this.player2Id)
             return true;
         return false;
@@ -241,7 +237,7 @@ export class GameService{
             forceX = 1.3;
             forceY = 1.2;
         }
-        console.log("Fx: ", forceX, " Fy: ", forceY);
+        // console.log("Fx: ", forceX, " Fy: ", forceY);
         this.serve = !this.serve
         // this.ball = Bodies.circle(width / 2, height / 2, 10, { 
         //     restitution: 1,
