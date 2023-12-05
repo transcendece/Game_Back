@@ -189,6 +189,4 @@ export enum gameMaps{
 export enum gameMods {
     DEFI,
     TIME,
-    ADVANCED,
-    INTEMIDIER
 }

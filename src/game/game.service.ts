@@ -18,10 +18,10 @@ const width             :number = 600;
 const height            :number = 800;
 const paddleWidth       :number = 125;
 const paddleHeight      :number = 20;
-const maxVelocity       :number = 10;
+// const maxVelocity       :number = 10;
 const maxScore          :number = 4;
-const AdvObs            :Body[] = []
-const IntObs            :Body[] = []
+const AdvancedObs            :Body[] = [Bodies.rectangle(width / 2, height / 2, 800, 10, { isStatic: true , label: "ADV"})]
+const IntemidierObs            :Body[] = [Bodies.rectangle(width / 2, height / 2, 400, 10, { isStatic: true , label: "INTE"})]
 
 
 @Injectable()
@@ -45,6 +45,7 @@ export class GameService{
     obstacles       :Body[];
     isRunning       :boolean;
 
+    maxVelocity     :number
     score1          :number;
     score2          :number;
 
@@ -58,6 +59,12 @@ export class GameService{
         this.isRunning = true;
         this.score1 = 0;
         this.score2 = 0;
+        if (this.map === gameMaps.ADVANCED)
+            this.maxVelocity = 20;
+        else if (this.map === gameMaps.INTEMIDIER)
+        this.maxVelocity = 15
+        else 
+        this.maxVelocity = 10
 
         this.engine = Engine.create({
             gravity: {x: 0, y: 0, scale: 0.001},
@@ -93,16 +100,16 @@ export class GameService{
         
         this.obstacles = [];
 
-        if ( mode === gameMods.ADVANCED )
-            this.obstacles = AdvObs;
-        else if ( mode === gameMods.INTEMIDIER )
-            this.obstacles = IntObs;
+        if ( this.map === gameMaps.ADVANCED )
+            this.obstacles = AdvancedObs;
+        else if ( this.map === gameMaps.INTEMIDIER )
+            this.obstacles = IntemidierObs;
     }
 
 
 
     public startGame(){
-        console.log("START GAME ||||||||||||");
+        // console.log("START GAME ||||||||||||");
         // this.isRunning = true
         this.client1.emit("START", {
             "ID"    :1,
@@ -123,13 +130,13 @@ export class GameService{
         });
 
         Runner.run(this.runner, this.engine);
-        Composite.add(this.engine.world, [this.p1, this.p2 , ...this.grounds]);
+        Composite.add(this.engine.world, [this.p1, this.p2 , ...this.grounds, ...this.obstacles]);
         this.spownBall();
         this.checkBallPosition();
         try
         {
             Events.on(this.engine, "collisionStart", event =>{
-            console.log("testing ...");
+            // console.log("testing ...");
             
             let     stop : boolean = false; 
             event.pairs.forEach((pair)=>{
@@ -137,6 +144,26 @@ export class GameService{
                 const bodyB : Body = pair.bodyB;
                 
                 if (bodyA === this.ball || bodyB == this.ball){
+                    const normal = pair.collision.normal;
+                    const Threshold = 0.1;
+                    if (Math.abs(normal.x) < Threshold){
+                        const sign = Math.sign(this.ball.velocity.x);
+                        const i = 0.5;
+                        Body.setVelocity(this.ball, {
+                            x: Math.min(this.ball.velocity.x + sign * i , this.maxVelocity),
+                            y : this.ball.velocity.y
+                        })
+                        const restitution = 1; // Adjust this value for desired bounciness
+                        const friction = 0; // Adjust this value for desired friction
+                        
+                        // Set restitution and friction for the ball
+                        // Body.set(this.ball, { restitution, friction });
+                    }
+                    
+
+
+
+
                     const otherBody = bodyA === this.ball ? bodyB : bodyA;
                     if (otherBody.label === "TOP" || otherBody.label === "DOWN"){
                         if (otherBody.label === "TOP")          this.score2++;
@@ -179,8 +206,8 @@ export class GameService{
                 "score1": this.score1,
                 "score2": this.score2,
             });
-            console.log("1 PLAYERs POS: ", this.p1.position, this.p2.position);
-            console.log("2 PLAYERs POS: ", this.reverseVector(this.p1.position), this.reverseVector(this.p2.position));
+            // console.log("1 PLAYERs POS: ", this.p1.position, this.p2.position);
+            // console.log("2 PLAYERs POS: ", this.reverseVector(this.p1.position), this.reverseVector(this.p2.position));
             
         });
 
@@ -203,10 +230,6 @@ export class GameService{
     }
 
     public ifPlayerInGame(id : string) : boolean{
-        console.log("id = ", id);
-        console.log("p1 = ", this.player1Id);
-        console.log("p2 = ", this.player2Id);
-        
         if (id === this.player1Id || id === this.player2Id)
             return true;
         return false;
@@ -234,7 +257,7 @@ export class GameService{
             forceX = 1.3;
             forceY = 1.2;
         }
-        console.log("Fx: ", forceX, " Fy: ", forceY);
+        // console.log("Fx: ", forceX, " Fy: ", forceY);
         this.serve = !this.serve
         // this.ball = Bodies.circle(width / 2, height / 2, 10, { 
         //     restitution: 1,

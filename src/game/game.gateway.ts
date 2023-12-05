@@ -32,11 +32,6 @@ const randomString = (length = 20) => {
     return Math.random().toString(36).substring(2, length + 2);
 };
 
-const gameHeight = 800;
-const gameWidth = 600;
-const playerWidth = 125;
-const playerHeight = 20;
-
 @WebSocketGateway(8888, {
     cors: {
         origin: ['http://localhost:3000']
@@ -59,7 +54,7 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
 
     constructor(){};
     async handleConnection(client: Socket, ...args: any[]) {
-        console.log('client connected:', client.id);
+        // console.log('client connected:', client.id);
         if (this.clients.has(client.id))
             client.disconnect()
         this.clients.set(client.id, client);
@@ -73,9 +68,9 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
         //     console.log("STOP THE GAME");
         // }
 
-        console.log("STOP THE GAME, length of Random MAP : ", this.Random.size);
+        // console.log("STOP THE GAME, length of Random MAP : ", this.Random.size);
         this.Random.forEach((value, key) => {
-            console.log("STOP THE GAME, length of Random MAP : ", this.Random.size);
+            // console.log("STOP THE GAME, length of Random MAP : ", this.Random.size);
             if (value.ifPlayerInGame(client.id)){
             
                     value.stop();
@@ -90,62 +85,62 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
 
     
     @SubscribeMessage("CREATE")
-    createGame(@MessageBody() req: { clientId: string}){
-        this.createNewGame(req.clientId);
+    createGame(@MessageBody() req: { clientId: string , map: string, mod: string}){
+        this.createNewGame(req.clientId, req.map, req.mod);
     }
     
     @SubscribeMessage("RANDOM")
-    randomGame(@MessageBody() req: { clientId: string}){
-        this.createRandomGame(req.clientId);
+    randomGame(@MessageBody() req: { clientId: string , map: string, mod: string}){
+        this.createRandomGame(req.clientId , req.map, req.mod);
     }
     
     @SubscribeMessage("JOIN")
-    joinToGame(@MessageBody() res : {clientId: string, gameId: string}){
-        console.log(`join to game id: ${res.gameId}`)
-        const gameObj = this.Random.get(res.gameId);
+    joinToGame(@MessageBody() req : {clientId: string, gameId: string}){
+        // console.log(`join to game id: ${req.gameId}`)
+        const gameObj = this.Random.get(req.gameId);
         // if (game invalid or game full)
         //     sendMsgErr()
-        gameObj.setPlayer2(this.clients.get(res.clientId), res.clientId);
-        this.sendPlayDemand(gameObj.player1Id, gameObj.player2Id, res.gameId);
+        gameObj.setPlayer2(this.clients.get(req.clientId), req.clientId);
+        this.sendPlayDemand(gameObj.player1Id, gameObj.player2Id, req.gameId);
     }
     
     @SubscribeMessage("PLAY")
-    beginningGame(@MessageBody() res : {clientId: string, gameId: string}){
-        this.Random.get(res.gameId).startGame();
+    beginningGame(@MessageBody() req : {clientId: string, gameId: string}){
+        this.Random.get(req.gameId).startGame();
     }
     
     @SubscribeMessage("UPDATE")
-    updatePaddle(@MessageBody() res: {clientId: string, gameId: string, vec: Vector }){
-        // console.log("RESPONSE : ", res);
-        console.log("RES UPDATE: ", res);
+    updatePaddle(@MessageBody() req: {clientId: string, gameId: string, vec: Vector }){
+        // console.log("reqPONSE : ", req);
+        // console.log("req UPDATE: ", req);
         
-        if (res.clientId === this.Random.get(res.gameId).player1Id){ 
-            let vec: Vector = {x: res.vec.x ,y:780}
-            console.log("PLAYER1: BEFORE: ", this.Random.get(res.gameId).p1.position)
-            Body.setPosition(this.Random.get(res.gameId).p1, vec);
-            console.log("PLAYER1: ", this.Random.get(res.gameId).p1.position);
+        if (req.clientId === this.Random.get(req.gameId).player1Id){ 
+            let vec: Vector = {x: req.vec.x ,y:780}
+            // console.log("PLAYER1: BEFORE: ", this.Random.get(req.gameId).p1.position)
+            Body.setPosition(this.Random.get(req.gameId).p1, vec);
+            // console.log("PLAYER1: ", this.Random.get(req.gameId).p1.position);
         }
-        else if (res.clientId === this.Random.get(res.gameId).player2Id){
-            let vec: Vector = {x : res.vec.x ,y : 20}
-            console.log("PLAYER2: BEFORE: ", this.Random.get(res.gameId).p2.position);
-            Body.setPosition(this.Random.get(res.gameId).p2, vec);
-            console.log("PLAYER2: ", this.Random.get(res.gameId).p2.position);
+        else if (req.clientId === this.Random.get(req.gameId).player2Id){
+            let vec: Vector = {x : req.vec.x ,y : 20}
+            // console.log("PLAYER2: BEFORE: ", this.Random.get(req.gameId).p2.position);
+            Body.setPosition(this.Random.get(req.gameId).p2, vec);
+            // console.log("PLAYER2: ", this.Random.get(req.gameId).p2.position);
         }
 
-        this.Random.get(res.gameId).client1.emit('UPDATE', {
-            "ball"  : this.Random.get(res.gameId).ball.position,
-            "p1"    : this.Random.get(res.gameId).p1.position,
-            "p2"    : this.Random.get(res.gameId).p2.position,
-            "score1": this.Random.get(res.gameId).score1,
-            "score2": this.Random.get(res.gameId).score2,
+        this.Random.get(req.gameId).client1.emit('UPDATE', {
+            "ball"  : this.Random.get(req.gameId).ball.position,
+            "p1"    : this.Random.get(req.gameId).p1.position,
+            "p2"    : this.Random.get(req.gameId).p2.position,
+            "score1": this.Random.get(req.gameId).score1,
+            "score2": this.Random.get(req.gameId).score2,
         });
 
-        this.Random.get(res.gameId).client2.emit('UPDATE', {
-            "ball"  : this.Random.get(res.gameId).reverseVector(this.Random.get(res.gameId).ball.position),
-            "p1"    : this.Random.get(res.gameId).reverseVector(this.Random.get(res.gameId).p1.position),
-            "p2"    : this.Random.get(res.gameId).reverseVector(this.Random.get(res.gameId).p2.position),
-            "score1": this.Random.get(res.gameId).score1,
-            "score2": this.Random.get(res.gameId).score2,
+        this.Random.get(req.gameId).client2.emit('UPDATE', {
+            "ball"  : this.Random.get(req.gameId).reverseVector(this.Random.get(req.gameId).ball.position),
+            "p1"    : this.Random.get(req.gameId).reverseVector(this.Random.get(req.gameId).p1.position),
+            "p2"    : this.Random.get(req.gameId).reverseVector(this.Random.get(req.gameId).p2.position),
+            "score1": this.Random.get(req.gameId).score1,
+            "score2": this.Random.get(req.gameId).score2,
         });
     }
     
@@ -153,20 +148,20 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
 
     ///        CREATE GAME FUNCTION             ///
     
-    private createNewGame(player1: string, player2?: string){
+    private createNewGame(player1: string, map: string, mod: string, player2?: string){
         let state = player2 === undefined  ? false : true;
-        console.log(`state: ${state} p2: ${player2}`);
+        // console.log(`state: ${state} p2: ${player2}`);
          
         const gameId = randomString(20);
-        console.log("game id : " + gameId);
-        console.log("user : " + player1);
+        // console.log("game id : " + gameId);
+        // console.log("user : " + player1);
         // if (!player1) {
         //     console.log("hhhhh");
         //     return;
             
         // }
         this.Random.set(gameId, new GameService(this.clients.get(player1), gameId, gameMaps.BEGINNER, gameMods.DEFI));
-        console.log("RANDOM SIZE: ", this.Random.size);
+        // console.log("RANDOM SIZE: ", this.Random.size);
         
         if (!state)
             this.clients.get(player1).emit("CREATE", { gameId : "gameId", });
@@ -193,14 +188,12 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
     }
     
     
-    private createRandomGame (player: string){
+    private createRandomGame (player: string, map: string, mod: string){
         this.randomQueue.push(player)
         if (this.randomQueue.length >= 2) {
             const player1 = this.randomQueue.shift();
             const player2 = this.randomQueue.shift();
-            console.log("========>     ",player1, player2);
-            
-            this.createNewGame(player1, player2);
+            this.createNewGame(player1,map, mod, player2);
         }
     }
 }
