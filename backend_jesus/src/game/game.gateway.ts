@@ -90,13 +90,13 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
 
     
     @SubscribeMessage("CREATE")
-    createGame(@MessageBody() res: { clientId: string}){
-        this.createNewGame(res.clientId);
+    createGame(@MessageBody() req: { clientId: string}){
+        this.createNewGame(req.clientId);
     }
     
     @SubscribeMessage("RANDOM")
-    randomGame(@MessageBody() res: { clientId: string}){
-        this.createRandomGame(res.clientId);
+    randomGame(@MessageBody() req: { clientId: string}){
+        this.createRandomGame(req.clientId);
     }
     
     @SubscribeMessage("JOIN")

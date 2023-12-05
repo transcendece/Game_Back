@@ -147,19 +147,12 @@ export class GameService{
                 }
             });
             if (this.score1 === maxScore || this.score2 === maxScore ){
-                let winner = this.score1 === maxScore ? this.client1 : this.client2;
-                let loser = this.score1 === maxScore ? this.client2 : this.client1;
+                let winner : Socket = this.score1 === maxScore ? this.client1 : this.client2;
+                let loser : Socket = this.score1 === maxScore ? this.client2 : this.client1;
                 winner.emit("WinOrLose", {content: "win"});
                 loser.emit("WinOrLose", {content: "lose"});
                 this.stop();
             }
-            // if (stop) {
-            //     setTimeout(() => {
-            //         console.log("WEWE :", stop);
-                    
-            //         this.spownBall();
-            //     }, 1000);
-            // }
         })}
         catch (error) {
             console.log("got an error ....");
