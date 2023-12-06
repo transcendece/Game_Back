@@ -91,6 +91,8 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
     
     @SubscribeMessage("RANDOM")
     randomGame(@MessageBody() req: { clientId: string , map: string, mod: string}){
+        console.log("request: ", req);
+        
         this.createRandomGame(req.clientId , req.map, req.mod);
     }
     
@@ -189,6 +191,7 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
     
     
     private createRandomGame (player: string, map: string, mod: string){
+
         this.randomQueue.push(player)
         if (this.randomQueue.length >= 2) {
             const player1 = this.randomQueue.shift();

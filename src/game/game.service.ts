@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
-import Matter ,{ 
+
+import { 
     Engine, 
-    Render, 
     Bodies, 
     Composite, 
     Runner, 
@@ -9,6 +9,7 @@ import Matter ,{
     Events,
     Vector
 } from 'matter-js';
+
 import { Socket } from "socket.io";
 
 import { gameMaps, gameMods } from "src/DTOs/game/game.dto";
@@ -18,7 +19,6 @@ const width             :number = 600;
 const height            :number = 800;
 const paddleWidth       :number = 125;
 const paddleHeight      :number = 20;
-// const maxVelocity       :number = 10;
 const maxScore          :number = 4;
 const AdvancedObs            :Body[] = [Bodies.rectangle(width / 2, height / 2, 800, 10, { isStatic: true , label: "ADV"})]
 const IntemidierObs            :Body[] = [Bodies.rectangle(width / 2, height / 2, 400, 10, { isStatic: true , label: "INTE"})]
@@ -45,9 +45,11 @@ export class GameService{
     obstacles       :Body[];
     isRunning       :boolean;
 
-    maxVelocity     :number
+    maxVelocity     :number;
     score1          :number;
     score2          :number;
+    maxScore        :number;
+    maxTime         :number; // in minutes
 
     constructor(client: Socket,gameId: string , map: gameMaps, mode: gameMods){
         this.id = gameId;
@@ -59,20 +61,14 @@ export class GameService{
         this.isRunning = true;
         this.score1 = 0;
         this.score2 = 0;
-        if (this.map === gameMaps.ADVANCED)
-            this.maxVelocity = 20;
-        else if (this.map === gameMaps.INTEMIDIER)
-        this.maxVelocity = 15
-        else 
-        this.maxVelocity = 10
-
+        
         this.engine = Engine.create({
             gravity: {x: 0, y: 0, scale: 0.001},
             positionIterations: 10,
             velocityIterations: 8,
         });
         this.runner = Runner.create()
-
+        
         this.ball = Bodies.circle(width / 2, height / 2, 10, { 
             restitution: 1,
             frictionAir: 0,
@@ -96,14 +92,28 @@ export class GameService{
             Bodies.rectangle(0, 0, 10, 1600, { isStatic: true , label: "LEFT"}),
             Bodies.rectangle(600, 0, 10, 1600, { isStatic: true , label: "RIGHT"}),
         ];
-
         
         this.obstacles = [];
-
-        if ( this.map === gameMaps.ADVANCED )
+        
+        if (this.map === gameMaps.ADVANCED)
+        {
             this.obstacles = AdvancedObs;
-        else if ( this.map === gameMaps.INTEMIDIER )
-            this.obstacles = IntemidierObs;
+            this.maxVelocity = 20;
+            if (this.mode === gameMods.DEFI)this.maxScore = 7;
+            else   this.maxTime = 5;
+            
+        }
+        else if (this.map === gameMaps.INTEMIDIER){
+            this.obstacles = IntemidierObs
+            this.maxVelocity = 15
+            if (this.mode === gameMods.DEFI)this.maxScore = 5;
+            else   this.maxTime = 3;
+        }
+        else {
+            this.maxVelocity = 10
+            if (this.mode === gameMods.DEFI)this.maxScore = 4;
+            else   this.maxTime = 1;
+       }
     }
 
 
@@ -136,8 +146,6 @@ export class GameService{
         try
         {
             Events.on(this.engine, "collisionStart", event =>{
-            // console.log("testing ...");
-            
             let     stop : boolean = false; 
             event.pairs.forEach((pair)=>{
                 const bodyA :Body = pair.bodyA;
@@ -174,10 +182,8 @@ export class GameService{
                 }
             });
             if (this.score1 === maxScore || this.score2 === maxScore ){
-                let winner : Socket = this.score1 === maxScore ? this.client1 : this.client2;
-                let loser : Socket = this.score1 === maxScore ? this.client2 : this.client1;
-                winner.emit("WinOrLose", {content: "win"});
-                loser.emit("WinOrLose", {content: "lose"});
+                this.score1 === maxScore ? this.client1.emit("WinOrLose", {content: "win"}) : this.client2.emit("WinOrLose", {content: "win"});
+                this.score1 === maxScore ? this.client2.emit("WinOrLose", {content: "lose"}) : this.client1.emit("WinOrLose", {content: "lose"});
                 this.stop();
             }
         })}
