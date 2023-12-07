@@ -32,7 +32,7 @@ const randomString = (length = 20) => {
     return Math.random().toString(36).substring(2, length + 2);
 };
 
-@WebSocketGateway(8888, {
+@WebSocketGateway(8080, {
     cors: {
         origin: ['http://localhost:3000']
     }
@@ -54,7 +54,7 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
 
     constructor(){};
     async handleConnection(client: Socket, ...args: any[]) {
-        // console.log('client connected:', client.id);
+        console.log('client connected:', client.id);
         if (this.clients.has(client.id))
             client.disconnect()
         this.clients.set(client.id, client);

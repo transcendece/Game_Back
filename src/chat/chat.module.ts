@@ -9,11 +9,12 @@ import { messageRepository } from 'src/modules/message/message.repository';
 import { UsersRepository } from 'src/modules/users/users.repository';
 import { ChatController } from './chat.controller';
 import { ChatGateway } from './chat.gateway';
-import { UserService } from 'src/auth/user.service';
+import { ChannelsService } from './chat.service';
+import { UserService } from 'src/auth/Services/user.service';
 
 @Module({
     imports :[],
-    providers: [UsersRepository, PrismaService, FriendsRepository, InvitesRepository, MatchesRepository, messageRepository, converationRepositroy, PrismaService, AchievementRepository, ChatGateway, InvitesRepository, UserService],
+    providers: [UsersRepository, PrismaService, FriendsRepository, InvitesRepository, MatchesRepository, messageRepository, converationRepositroy, PrismaService, AchievementRepository, ChatGateway, InvitesRepository, UserService, ChannelsService],
     controllers: [ChatController],
 })
 export class ChatModule {}

@@ -12,8 +12,13 @@ export class UserService {
     }
 
     async getUser(id:string):Promise<UserDto | null> {
-
-        return await this.prisma.user.findUnique({where: {id: id}})
+        try {
+            return await this.prisma.user.findUnique({where: {id: id}})
+        }
+        catch (error) {
+            console.log("error ...");
+            
+        }
     }
 
     async getgoogleUser(id:string): Promise<UserDto | null > {

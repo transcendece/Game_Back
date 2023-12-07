@@ -1,9 +1,9 @@
 import { Controller, Post, Res, Req, Body, UnauthorizedException, UseGuards, Get } from "@nestjs/common";
-import { TwoFAService } from "./2FA.service";
 import { Response } from "express";
-import { UserDto } from "src/DTOs/User/user.dto";
-import { UserService } from "./user.service";
-import { JwtAuth } from "./jwt.guard";
+import { TwoFaV, UserDto } from "src/DTOs/User/user.dto";
+import { JwtAuth } from "../Guards/jwt.guard";
+import { TwoFAService } from "../Services/2FA.service";
+import { UserService } from "../Services/user.service";
 
 @Controller('2FA')
 export class TwoFAConroller {
@@ -15,8 +15,7 @@ export class TwoFAConroller {
 
         try {
             const user = req.user;
-            console.log(`user: ${user.username}`);
-            
+
             const code = await this.TwoFAService.generate2FASecret(user);
             response.status(200).json({code});
         }
@@ -27,24 +26,32 @@ export class TwoFAConroller {
 
     @Post('validation')
     @UseGuards(JwtAuth)
-    async validate2FA(@Req() req:Request & {user: UserDto}, @Body('code') code : string, @Res() res: Response) {
+    async validate2FA(@Req() req:Request & {user: UserDto}, @Body() body : TwoFaV, @Res() res: Response) {
 
-        const login = req.user.username;
-        const Pin = code;
-        console.log(`hello : ${code}, hello : ${login}`)
+        const user = req.user;
+        const id = user.id;
+        const Pin = body.code;
+        console.log(body)
+        console.log("pin : ", Pin);
+
+        console.log("ZEBIIII", body.code);
+
+        console.log(`hello : ${body.code}, hello : ${id}`)
         try {
 
-            const user = await this.userService.getUser(login);
+            const user = await this.userService.getUser(id);
 
             const isValid = await this.TwoFAService.TwoFACodeValidation(Pin, user.TwoFASecret);
 
             if (!isValid)
-                throw new UnauthorizedException('Wrong Authentication code');
-            res.status(201).json(user)
+                res.status(401).send('invalid otp, try again.')
+                // throw new UnauthorizedException('Wrong Authentication code');
+            else {
+                res.status(200).json(user)
+            }
         }
         catch (error){
-
-            res.status(400).json(error);
+            res.status(401).json(error);
         }
     }
 }

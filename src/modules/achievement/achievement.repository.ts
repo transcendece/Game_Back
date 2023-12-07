@@ -2,6 +2,8 @@ import { Injectable } from "@nestjs/common";
 import { AchievementDto } from "src/DTOs/achievement/achievement.dto";
 import { PrismaService } from "src/modules/database/prisma.service";
 import { FileService } from "../readfile/readfile";
+
+
 @Injectable()
 export class AchievementRepository {
     constructor (private readonly prisma: PrismaService) {}
@@ -75,6 +77,22 @@ export class AchievementRepository {
             
             return achievements;
     }
+
+    async getAchievementImage(id: string): Promise<string | null> {
+        console.log('achievement param : ', id);
+        
+        let tmp : AchievementDto[] = await this.prisma.achievement.findMany()
+        console.log("achievement : 000000000=> ", tmp);
+        if (tmp){
+            tmp.forEach((achievemnt)=> {
+                if (achievemnt.title == id)
+                    id = achievemnt.icon
+            })
+            return id;
+        }
+        return null
+    }
+
 
     async getAchievements() : Promise<AchievementDto[]> {
         return await this.prisma.achievement.findMany();

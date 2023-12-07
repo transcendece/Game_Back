@@ -7,10 +7,11 @@ import { ChatModule } from './chat/chat.module';
 import { SearchModule } from './search/search.module';
 import { HomeModule } from './home/home.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
+import { LeaderboardModule } from "./modules/leaderboard/leaderboard.module";
 
 
 @Module({
-  imports: [AuthModule, GameModule, SettingsModule, ProfileModule, ChatModule, SearchModule, HomeModule, CloudinaryModule],
+  imports: [AuthModule, GameModule, SettingsModule, ProfileModule, ChatModule, HomeModule, CloudinaryModule, LeaderboardModule, SearchModule],
   controllers: [],
   providers: [],
 })

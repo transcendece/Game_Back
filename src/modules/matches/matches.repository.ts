@@ -41,31 +41,33 @@ export class MatchesRepository {
     async CheckForGamesAchievements(matches: MatchDto[], _id : string) : Promise<any> {
         let user : UserDto = await this.prisma.user.findUnique({where : {id : _id}})
         console.log(user);
-        if (matches.length > 0) {
-            if (!user.achievements.includes("play your first game"))
-                this.user.updateAcheivement("play your first game", _id)
+        if (!user)
+            return
+        if (matches.length > 0 && !user.achievements.includes('https://res.cloudinary.com/dvmxfvju3/image/upload/v1699322232/umkxxvgtxbe2bowynp8v.png')) {
+            if (!user.achievements.includes("https://res.cloudinary.com/dvmxfvju3/image/upload/v1699322232/umkxxvgtxbe2bowynp8v.png"))
+                this.user.updateAcheivement("https://res.cloudinary.com/dvmxfvju3/image/upload/v1699322232/umkxxvgtxbe2bowynp8v.png", _id)
         }
-        if (matches.length > 2){
-            if (!user.achievements.includes("play 3 games"))
-                this.user.updateAcheivement("play 3 games", _id)
+        if (matches.length > 2 && !user.achievements.includes('https://res.cloudinary.com/dvmxfvju3/image/upload/v1699322411/fuentssbawcfsdbzgvzu.png')) {
+            if (!user.achievements.includes("https://res.cloudinary.com/dvmxfvju3/image/upload/v1699322411/fuentssbawcfsdbzgvzu.png"))
+                this.user.updateAcheivement("https://res.cloudinary.com/dvmxfvju3/image/upload/v1699322411/fuentssbawcfsdbzgvzu.png", _id)
         } 
-        if (matches.length > 9){
-            if (!user.achievements.includes("play 10 games"))
-                this.user.updateAcheivement("play 10 games", _id)
+        if (matches.length > 9 && !user.achievements.includes('https://res.cloudinary.com/dvmxfvju3/image/upload/v1699322764/ixv9svidceql0yox2ils.png')){
+            if (!user.achievements.includes("https://res.cloudinary.com/dvmxfvju3/image/upload/v1699322764/ixv9svidceql0yox2ils.png"))
+                this.user.updateAcheivement("https://res.cloudinary.com/dvmxfvju3/image/upload/v1699322764/ixv9svidceql0yox2ils.png", _id)
         }
-        if (matches.length > 99){
-            if (!user.achievements.includes("play 100 games"))
-            this.user.updateAcheivement("play 100 games", _id)
+        if (matches.length > 99 && !user.achievements.includes('https://res.cloudinary.com/dvmxfvju3/image/upload/v1699322889/mmgus4h0unnnj3lvhw2v.png')){
+            if (!user.achievements.includes("https://res.cloudinary.com/dvmxfvju3/image/upload/v1699322889/mmgus4h0unnnj3lvhw2v.png"))
+            this.user.updateAcheivement("https://res.cloudinary.com/dvmxfvju3/image/upload/v1699322889/mmgus4h0unnnj3lvhw2v.png", _id)
         }
         matches.forEach((match) => {
-            if (!user.achievements.includes("win a game")) {
+            if (!user.achievements.includes("https://res.cloudinary.com/dvmxfvju3/image/upload/v1699322378/qdat4wgumpjsvbtcisd6.png")) {
                 if (match.playerAId == _id) {
                     if (match.playerAScore > match.playerBScore)
-                        this.user.updateAcheivement("win a game", _id)
+                        this.user.updateAcheivement("https://res.cloudinary.com/dvmxfvju3/image/upload/v1699322378/qdat4wgumpjsvbtcisd6.png", _id)
                 }
                 else {
                     if (match.playerAScore < match.playerBScore)
-                        this.user.updateAcheivement("win a game", _id)
+                        this.user.updateAcheivement("https://res.cloudinary.com/dvmxfvju3/image/upload/v1699322378/qdat4wgumpjsvbtcisd6.png", _id)
                 }
             }
         })

@@ -1,9 +1,9 @@
-import { IsNumber, IsString } from "class-validator";
+import { IsString } from "class-validator";
 
 
 export class InviteDto {
         @IsString()
-        id      :string;
+        id      ? :string;
 
         @IsString()
         invitationRecieverId :string;
@@ -11,7 +11,5 @@ export class InviteDto {
         @IsString()
         invitationSenderId :string;
 
-        @IsNumber()
-        inviteStatus : number
-
+        inviteStatus : number // need to be removed from the prisma schema and form this dto  TO FIX
 }

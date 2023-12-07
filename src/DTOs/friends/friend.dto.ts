@@ -2,14 +2,14 @@ import { IsString } from "class-validator";
 
 
 export class FriendDto {
-
         constructor (Reciever: string , Sender :string, message : string) {
                 this.inviteRecieverId = Reciever
                 this.inviteSenderId = Sender
                 this.latestMessage = message
         }
+
         @IsString()
-        id      :string;
+        id     ? :string;
 
         @IsString()
         inviteRecieverId :string;
@@ -18,7 +18,7 @@ export class FriendDto {
         inviteSenderId :string;
         
         @IsString()
-        latestMessage :string
+        latestMessage ? :string
 }
 
 // model Friend {

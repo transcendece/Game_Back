@@ -1,7 +1,7 @@
 import { CanActivate, Injectable, ExecutionContext, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { Request } from "express";
-import { UserService } from "./user.service";
+import { UserService } from "../Services/user.service";
 
 
 @Injectable()
@@ -15,28 +15,29 @@ export class JwtAuth implements CanActivate {
             
             // console.log(request.header.);
             
-            console.log(`token ====== ${token}`);
+            // console.log(`token ====== ${token}`);
             
-            if (!token) return false;
-                var payload = this.jwtService.verify(token)
+            var payload = this.jwtService.verify(token)
+            // console.log(`user dyal jwt : ${payload.username}, token ${token}`);
+            if (!token) 
+                return false;
+
+            const user = await this.userService.getUser(payload.sub)
+            // console.log(`user :: ${user.username}`);
+
+            if (!user) {
+                return false;
+            }
+            request.user = user;
+            return true;
             
         } catch (error) {
-            throw new UnauthorizedException('sir awld qahba, 7na kanla3bo hna')   
+            throw new UnauthorizedException('sir awldi, 7na kanla3bo hna')   
         }
         
-        const user = await this.userService.getUser(payload.sub)
-        console.log(`user dyal jwt : ${payload.sub}, token ${token}`);
-
-        if (!user) {
-            return false;
-        }
-        request.user = user;
-        return true;
     }
 
     extractTokenFromHeader(req: Request) {
-
-        console.log(`cookied :: ${req.cookies}`);
         
         return req.cookies['jwt-token'];
     }

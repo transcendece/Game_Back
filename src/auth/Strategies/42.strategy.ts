@@ -8,7 +8,7 @@ export class OAuth extends PassportStrategy(Strategy, '42') {
         super({
             clientID: process.env.CLIENT_ID_42,
             clientSecret: process.env.CLIENT_SECRET_42,
-            callbackURL: "http://localhost:5000/auth/42/callback",
+            callbackURL: "http://localhost:4000/auth/42/callback",
             profileFields: {
                 'id':   'id',
                 'username': 'login',
@@ -18,7 +18,6 @@ export class OAuth extends PassportStrategy(Strategy, '42') {
                 'emails.0.value': 'email',
             }
         });
-    
     }
 
     async validate(
@@ -27,7 +26,7 @@ export class OAuth extends PassportStrategy(Strategy, '42') {
         profile: any,
         done: VerifyCallback,
     ): Promise<any> {
-
+        
         const { id, email, login } = profile._json;
         const user = {
 

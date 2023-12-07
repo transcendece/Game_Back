@@ -1,7 +1,7 @@
 export class settingsDto {
     username : string;
 
-    email : string;
+    avatar : string;
 
     checked_ : boolean;
 }

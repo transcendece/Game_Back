@@ -7,15 +7,15 @@ import { InvitesRepository } from 'src/modules/invites/invites.repository';
 import { MatchesRepository } from 'src/modules/matches/matches.repository';
 import { messageRepository } from 'src/modules/message/message.repository';
 import { UsersRepository } from 'src/modules/users/users.repository';
-import { settingsController } from './settings.controller';
+import { FileService } from 'src/modules/readfile/readfile';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
-import { UserDto } from 'src/DTOs/User/user.dto';
+import { LeaderboardController } from './leaderboard.controller';
 import { UserService } from 'src/auth/Services/user.service';
-import { JwtAuth } from 'src/auth/Guards/jwt.guard';
 
 @Module({
     imports :[],
-    providers: [UsersRepository, PrismaService, FriendsRepository, InvitesRepository, MatchesRepository, messageRepository, converationRepositroy, PrismaService, AchievementRepository, CloudinaryService, JwtAuth, UserService],
-    controllers : [settingsController],
+    providers: [UsersRepository, PrismaService, FriendsRepository, InvitesRepository, MatchesRepository, messageRepository, converationRepositroy, PrismaService, AchievementRepository, FileService, CloudinaryService, UserService],
+    controllers : [LeaderboardController]
 })
-export class SettingsModule {}
+
+export class LeaderboardModule {}

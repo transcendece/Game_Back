@@ -4,13 +4,13 @@ import { IsString } from "class-validator";
 export class UserDto {
 
     @IsString()
-    id : string
+    id : string;
     
     @IsString()
     username : string;
 
     @IsString()
-    email :    string;
+    email ? :    string;
 
     avatar : string;
 
@@ -19,12 +19,17 @@ export class UserDto {
     TwoFASecret: string;
 
     IsEnabled: boolean;
+
+    channels : string[];
+
+    bandUsers : string[];
+
+    online  :    boolean;
+
+    level : number;
 }
 
-// https://photos.app.goo.gl/2v1UP58NK5cs3qhP9
-// name: string;
-// userName: string;
-// rank: number;
-// level: number;
-// pathImg: string;
-// avatar: string;
+export class TwoFaV {
+
+    code: string;
+}

@@ -11,29 +11,30 @@ export class TwoFAService {
 
     async generate2FASecret(data: UserDto):Promise<string> {
 
-        
-        var user = await this.userService.getUser(data.username)
+
+        const user : UserDto = await this.userService.getUser(data.id)
+
         if (!user)
             throw new UnauthorizedException('Invald data !!')
         if (!user.TwoFASecret) {
 
-            var secret = authenticator.generateSecret();
+            var secret : string = authenticator.generateSecret();
 
-            await this.userService.set2FaScret(secret, data.username);
+            await this.userService.set2FaScret(secret, data.id);
             console.log(`secret : ${secret}`);
         }
         else
             secret = user.TwoFASecret;
         const otpuri = authenticator.keyuri(user.username, process.env.TWO_FACTOR_AUTH_APP_NAME, secret);
-        
+
         const qrImg:string = await toDataURL(otpuri);
         console.log(qrImg);
         return qrImg;
     }
 
     async TwoFACodeValidation(qrcode: string, secret: string):Promise<boolean> {
-    
-        const ret = authenticator.verify({
+
+        const ret : boolean = authenticator.verify({
             token: qrcode,
             secret: secret
         });

@@ -42,9 +42,31 @@ export class InvitesRepository {
         return await this.prisma.invitation.findUnique({where : {id: id}});
     }
 
-    async deleteInvite (_id :string) : Promise<string> {
+    async getInviteToValidate(sender : string, reciever : string) : Promise<InviteDto> {
+        try {
+            console.log('got here ...');
+            
+            return await this.prisma.invitation.findFirst({where : {
+                invitationSenderId : sender,
+                invitationRecieverId : reciever
+            }})
+        }catch (error) {
+            console.log('got an error //');
+            
+        }
+    }
+
+    async getUserInviations(id: string) : Promise<InviteDto[]> {
+        return await this.prisma.invitation.findMany({
+            where : {
+                invitationRecieverId : id,
+            }
+        })
+    }
+
+    async deleteInvite (_id :string) : Promise<any> {
         console.log(`the id is : ${_id}`)
         await this.prisma.invitation.delete({where : {id: _id}});
-        return "Deleted"
+        console.log("Deleted");
     }
 }

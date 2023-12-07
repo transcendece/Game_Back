@@ -13,22 +13,21 @@ export class UsersRepository {
     }
 
     async getUserById (playerId : string) : Promise<UserDto | null> {
-        console.log(`playerId : ${playerId}`)
+        // console.log(`playerId : ${playerId}`)
         const data: UserDto = await this.prisma.user.findFirst({where : {
             id : playerId,
         }});
         if (!data)
-            return null;
+            return null; // neeed to throw an error
         return data;
     }
     
     async getUserByUsername (username : string) : Promise<UserDto | null> {
-        console.log(`username : ${username}`)
         const data: UserDto = await this.prisma.user.findFirst({where : {
             username : username,
         }});
         if (!data)
-            return null;
+            return null; // neeed to throw an error
         return data;
     }
 
@@ -41,16 +40,18 @@ export class UsersRepository {
         })
     }
 
-    async updateUsername(id: string, _username : string, isenabled: boolean) : Promise<any> {
+    async updateUsername(id: string, _username : string) : Promise<any> {
         return await this.prisma.user.update({where : {id},
             data : {
                 username : _username,
-                IsEnabled: isenabled
             }})
     }
 
+    async getUserWith(data : string) : Promise<UserDto[]> {
+        return await this.prisma.user.findMany({ where : { username : { contains : data, }}});
+    }
     async updateAcheivement(_title : string, id : string) : Promise<UserDto> {
-        let userAchievements : string[] = await (await this.prisma.user.findUnique({where : {id}})).achievements
+        let userAchievements : string[] = (await this.prisma.user.findUnique({where : {id}})).achievements
         let found : boolean = false;
         userAchievements.forEach((achievement) => {
             if (achievement == title)
@@ -63,7 +64,18 @@ export class UsersRepository {
                 achievements : userAchievements,
             }})
         }
+    
+    async getAllUsers() : Promise<UserDto[]> {
+            return await this.prisma.user.findMany();
+    }
 
+    async updateUserOnlineStatus(status : boolean, userId : string) {
+        await this.prisma.user.update({where : {id : userId},
+            data : {
+                online : status,
+            }    
+        })
+    }
     async deleteUser (id : string) : Promise <string> {
         await this.prisma.user.delete({where : {id}});
         return "deleted";

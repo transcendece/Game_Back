@@ -10,7 +10,7 @@ import { UsersRepository } from 'src/modules/users/users.repository';
 import { ProfileController } from './profile.controller';
 import { FileService } from 'src/modules/readfile/readfile';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
-import { UserService } from 'src/auth/user.service';
+import { UserService } from 'src/auth/Services/user.service';
 
 @Module({
     imports :[],
