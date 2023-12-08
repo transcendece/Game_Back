@@ -27,10 +27,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
     async handleConnection(client: Socket, ...args: any[]) {
       try {
         console.log("new connection ....");
-        
+
             let cookie : string = client.client.request.headers.cookie;
             console.log("00000000000 cookie 00000000000 >>>>> ",cookie);
-            
+
             if (cookie) {
               const jwt:string = cookie.substring(cookie.indexOf('=') + 1)
               let user;
@@ -90,7 +90,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
       async handleChannelMessage(@MessageBody() message: channelMessageDto,@ConnectedSocket() client : Socket) {
         try {
           console.log("0 ===> ", message);
-          
+
           let cookie : string = client.client.request.headers.cookie;
             if (cookie) {
               const jwt:string = cookie.substring(cookie.indexOf('=') + 1)
@@ -98,7 +98,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
               user =  this.jwtService.verify(jwt);
               if (user) {
                 console.log("1");
-                
+
                 const _user = await this.user.getUserById(user.sub)
                 if (_user) {
                   if (!_user.achievements.includes('https://res.cloudinary.com/dvmxfvju3/image/upload/v1699322994/vp6r4ephqymsyrzxgd0h.png')) {
@@ -171,7 +171,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
                 }
                 else {
                   message.conversationId = conversations.id;
-                  await this.sendToSocket(message); 
+                  await this.sendToSocket(message);
                 }
               }
         }
@@ -183,7 +183,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
           console.log(error)
         }
       }
-      
+
       async sendToSocket(message: messageDto) {
         try {
           console.log('message in send socket : ',message)
@@ -198,7 +198,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
               data.sender = message.senderId
               data.avatar = _reciever.avatar
               data.isOwner = false
-              data.conversationId = message.conversationId 
+              data.conversationId = message.conversationId
               socket.emit('RecieveMessage', data); // Replace 'your-event-name' with the actual event name
             } else {
               this.conversation.updateConversationDate(message.conversationId)
