@@ -62,6 +62,8 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
         this.Random = new Map<string, GameService>();
     };
     async handleConnection(client: Socket, ...args: any[]) {
+        console.log("connect ...")
+
         try{
             console.log("connection client size : ", this.clients.size);
             
@@ -129,9 +131,12 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
     }
 
     async handleDisconnect(client: Socket) {
+        console.log("disconnect ...")
         try{
+            let userdto: UserDto | null = await this.getUser(client)
+
             let cookie : string = client.client.request.headers.cookie;
-            console.log('Client disconnectedd:', client.id);
+            console.log('Client disconnectedd:', userdto.id);
             console.log("cookie ==== ", cookie);
 
             if (cookie){
@@ -154,6 +159,7 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
                             }
 
                         })
+                        // client.disconnect();
                     }
                 }
             }
