@@ -65,114 +65,70 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
         console.log("connect ...")
 
         try{
-            console.log("connection client size : ", this.clients.size);
-            
             let userdto: UserDto | null = await this.getUser(client)
-
-            console.log('CClient connected:', userdto);
+            console.log('CClient connected:', userdto.id, " : ", client.id);
             if (userdto){
                 if (this.clients.has(userdto.id)) { //CLIENT ALREDY CONNECTED
                     console.log("c alredy c: ", userdto.id);
-                    
                     client.emit('ERROR', "YOU ARE ALREDY CONNECTED...")
                     client.disconnect()
                 }
                 else{
                     this.clients.set(userdto.id, client);
+                    // client.emit("connect", { "clientId" : userdto.id })
+                    console.log("connected: ", client.connected);
                     
-                    client.emit("connection", { "clientId" : userdto.id })
-                    console.log("client map: ");
+                    // console.log("client map: ");
                     await this.user.updateUserOnlineStatus(true, userdto.id);
                 }
             }
             else{
                 console.log("User dosen't exist in database");
-
+                
                 client.emit('ERROR', "YOU ARE NOT EXIST IN DATABASE")
                 client.disconnect();
             }
-            // let cookie : string = client.client.request.headers.cookie;
-            // if (cookie){
-            //     console.log("cookie: ", cookie.substring(cookie.indexOf("=") + 1));
-            //     let user = this.jwtService.verify(cookie.substring(cookie.indexOf("=") + 1));
-            //     console.log("USER: ", user);
-            //     if (user){
-            //         let test = await this.user.getUserById(user.sub);
-            //         if (test){
-
-            //             if (this.clients.has(test.id)) //CLIENT ALREDY CONNECTED
-            //             {
-            //                 client.emit('ERROR', "YOU ARE ALREDY CONNECTED...")
-            //                 client.disconnect()
-            //             }
-            //             else{
-            //                 this.clients.set(test.id, client);
-            //                 client.emit("connection", { "clientId" : test.id })
-            //                 await this.user.updateUserOnlineStatus(true, user.sub);
-            //             }
-            //         }
-            //     }
-            // }
-            // else{
-            //     console.log("User dosen't exist in database");
-
-            //     client.emit('ERROR', "rh KAN3REF BAK, IHCHEM")
-            //     client.disconnect();
-            // }
+            
         }
-
-
+        
+        
         catch(error){
             console.log("user dosen't exist in database");
             client.emit('ERROR', "RAH KAN3REF BAK, IHCHEM")
             client.disconnect()
-            // console.log("invalid data : check JWT or DATABASE QUERIES")
         }
+        console.log("end connect ....");
     }
-
+    
     async handleDisconnect(client: Socket) {
         console.log("disconnect ...")
         try{
-            let userdto: UserDto | null = await this.getUser(client)
-
-            let cookie : string = client.client.request.headers.cookie;
-            console.log('Client disconnectedd:', userdto.id);
-            console.log("cookie ==== ", cookie);
-
-            if (cookie){
-                const user = this.jwtService.verify(cookie.substring(cookie.indexOf("=") + 1));
-                if (user){ //verify cookie
-                    const test = await this.user.getUserById(user.sub)
-                    if (test){
-                        await this.user.updateUserOnlineStatus(false, test.id);
-                        this.clients.delete(test.id);
-                        // console.log("CLIENTSIZE: ", this.clients.size);
-                        
-                        this.Random.forEach((value, key) => {
-                            // console.log("STOP THE GAME, length of Random MAP : ", this.Random.size);
-                            if (value.ifPlayerInGame(test.id)){
-
-                                value.stop();
-                                value.client1.emit("GAMEOVER")
-                                value.client2.emit("GAMEOVER")
-                                this.Random.delete(key);
-                            }
-
-                        })
-                        // client.disconnect();
-                    }
-                }
+            let userdto: UserDto  = await this.getUser(client)
+            if (userdto){
+                await this.user.updateUserOnlineStatus(false, userdto.id);
+                this.clients.delete(userdto.id);
+                this.Random.forEach((value, key) => {
+                    if (value.ifPlayerInGame(userdto.id)){   
+                        value.stop();
+                        value.client1.emit("GAMEOVER")
+                        value.client2.emit("GAMEOVER")
+                        this.Random.delete(key);
+                    }                
+                })
+                client.disconnect();
+                console.log("connected: ", client.connected);
             }
         }catch(error){
             console.log("ERROR", this.clients.size);
-
+            client.disconnect();
         }
+        console.log("end disconnect ...")
     };
 
 
     @SubscribeMessage("CREATE")
     async createGame(@MessageBody() req: {map: string, mod: string}, @ConnectedSocket() client : Socket){
-        let userdto: UserDto | null = await this.getUser(client)
+        let userdto: UserDto = await this.getUser(client)
         console.log("CREATE : ", userdto.id);
         if (!userdto)
             console.log("CREATE : userdto NOT VALID");
@@ -181,18 +137,26 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
 
     @SubscribeMessage("RANDOM")
     async randomGame(@MessageBody() req: {  map: string, mod: string} , @ConnectedSocket() client : Socket){
-        let userdto: UserDto | null = await this.getUser(client)
-        console.log("RANDOM : ", userdto.id);
-        if (!userdto)
-            console.log("RANDOM : userdto NOT VALID");
+        try{
+
+            let userdto: UserDto = await this.getUser(client)
             
-        this.createRandomGame(userdto.id , req.map, req.mod);
+            console.log("RANDOM..... : ", userdto.id);
+            if (!userdto)
+            console.log("RANDOM : userdto NOT VALID");
+        
+            this.createRandomGame(userdto.id , req.map, req.mod);
+        console.log("end RANDOM.....");
+        }catch(error){
+            console.log("ERROR IN RANDOM");
+            
+        }
     }
 
     @SubscribeMessage("JOIN")
     async joinToGame(@MessageBody() req : {gameId: string}, @ConnectedSocket() client : Socket){
         // console.log(`join to game id: ${req.gameId}`)
-        let userdto: UserDto | null = await this.getUser(client)
+        let userdto: UserDto = await this.getUser(client)
         if (!userdto)
             console.log("JOIN : userdto NOT VALID");
         const gameObj = this.Random.get(req.gameId);
@@ -209,56 +173,60 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
 
     @SubscribeMessage("UPDATE")
     async updatePaddle(@MessageBody() req: {gameId: string, vec: Vector }, @ConnectedSocket() client : Socket){
-        // console.log("reqPONSE : ", req);
-    //   try{  
-            let userdto: UserDto | null = await this.getUser(client)
-            // console.log("req UPDATE: ", req, " ", userdto.id);
+        console.log("UPDATE ....");
+        try{  
+            console.log("1 ....");
+            let userdto: UserDto = await this.getUser(client)
+            let game: GameService = this.Random.get(req.gameId);
+          // console.log("req UPDATE: ", req, " ", userdto.id);
             if (!userdto)
                 console.log("UPDATE : userdto NOT VALID");
-            // console.log("ID: ", userdto.id);
-            // console.log("ID1:  ", this.Random.get(req.gameId).player1Id);
-            // console.log("ID2:  ", this.Random.get(req.gameId).player2Id);
-            
-            
-            if (userdto && userdto.id === this.Random.get(req.gameId).player1Id){ 
-                console.log("BEZZY1: ", userdto.id );
-                let vec: Vector = {x: req.vec.x ,y:780}
-                
-                Body.setPosition(this.Random.get(req.gameId).p1, vec);
+            console.log("2 ....");
+            console.log("ID: ", userdto.id, "|||ID2:  ", game.player2Id , "ID1:  ", game.player1Id);            
+            if (userdto.id === game.player1Id){ 
+              console.log("BEZZY1: ", userdto.id );
+              let vec: Vector = {x: req.vec.x ,y:780}
+              
+              Body.setPosition(game.p1, vec);
             }
-            else if (userdto && userdto.id === this.Random.get(req.gameId).player2Id){
+            else if (userdto.id === game.player2Id){
                 console.log("BEZZY2: ", userdto.id );
                 let vec : Vector = {x: req.vec.x ,y:20}
-                Body.setPosition(this.Random.get(req.gameId).p2, vec);
+                Body.setPosition(game.p2, vec);
             }
-            this.Random.get(req.gameId).client1.emit('UPDATE', {
-                "ball"  : this.Random.get(req.gameId).ball.position,
-                "p1"    : this.Random.get(req.gameId).p1.position,
-                "p2"    : this.Random.get(req.gameId).p2.position,
-                "score1": this.Random.get(req.gameId).score1,
-                "score2": this.Random.get(req.gameId).score2,
+            console.log("3 ....");
+            game.client1.emit('UPDATE', {
+                "ball"  : game.ball.position,
+                "p1"    : game.p1.position,
+                "p2"    : game.p2.position,
+                "score1": game.score1,
+                "score2": game.score2,
             });
 
-            this.Random.get(req.gameId).client2.emit('UPDATE', {
-                "ball"  : this.Random.get(req.gameId).reverseVector(this.Random.get(req.gameId).ball.position),
-                "p1"    : this.Random.get(req.gameId).reverseVector(this.Random.get(req.gameId).p1.position),
-                "p2"    : this.Random.get(req.gameId).reverseVector(this.Random.get(req.gameId).p2.position),
-                "score1": this.Random.get(req.gameId).score1,
-                "score2": this.Random.get(req.gameId).score2,
+            game.client2.emit('UPDATE', {
+                "ball"  : game.reverseVector(game.ball.position),
+                "p1"    : game.reverseVector(game.p1.position),
+                "p2"    : game.reverseVector(game.p2.position),
+                "score1": game.score1,
+                "score2": game.score2,
             });
-        // }catch(err){
-        //     console.log("UPDATE EXEPTION!!!???   ", err);
-        // }
+        }catch(err){
+            console.log("UPDATE EXEPTION!!!???   ");
+        }
+        console.log("end UPDATE.....");
+        
     }
 
     //GET USER FROM DATABASE
 
     private async getUser(client: Socket): Promise<UserDto> | null{
         let cookie : string = client.client.request.headers.cookie;
+        
         if (cookie){
             const user = this.jwtService.verify(cookie.substring(cookie.indexOf("=") + 1));
             if (user){
                 const userdto: UserDto = await this.user.getUserById(user.sub);
+                console.log("cookie: ", cookie);
                 if (userdto)
                     return userdto;
             }
