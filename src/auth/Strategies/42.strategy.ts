@@ -18,6 +18,8 @@ export class OAuth extends PassportStrategy(Strategy, '42') {
                 'emails.0.value': 'email',
             }
         });
+        console.log('555555');
+        
     }
 
     async validate(
