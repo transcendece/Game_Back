@@ -21,18 +21,15 @@ export class ProfileController {
                  private file : FileService,
                  private friend: FriendsRepository)
                 {}
-    @Get()
+    @Get(':id')
     @UseGuards(JwtAuth)
-    async GetUserData(@Req() req: Request & {user : UserDto}, @Res() res: Response) : Promise<void> {
-        console.log(`kajsflsahdfhjsadfhasdfklasdhfh`);
-        
+    async GetUserData(@Req() req: Request & {user : UserDto},@Param('id') id : string , @Res() res: Response) : Promise<void> {
         try {
-
         const _achievements : AchievementDto[] = await this.achievement.getAchievements();
         if (!_achievements.length)
             await this.achievement.CreateAchievment(this.file);
-        const _matches: MatchDto[] =  await this.match.findMatchesByUserId(req.user.id)
-        let tmpUser : UserDto  = await this.user.getUserById(req.user.id)
+        const _matches: MatchDto[] =  await this.match.findMatchesByUserId(id)
+        let tmpUser : UserDto  = await this.user.getUserById(id)
         if (!tmpUser)
             throw ('no such user.')
         let profileData : UserData = {

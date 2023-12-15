@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from 'src/modules/database/prisma.service';
 import { UserDto } from 'src/DTOs/User/user.dto';
 import { title } from 'process';
@@ -13,21 +13,13 @@ export class UsersRepository {
     }
 
     async getUserById (playerId : string) : Promise<UserDto | null> {
-        try{ 
-            // console.log(`playerId : ${playerId}`)
-            if (!playerId)
-                return null
-            const data: UserDto = await this.prisma.user.findFirst({where : {
-                id : playerId,
-            }});
-            console.log(playerId);
-            
-            if (!data)
+        // console.log(`playerId : ${playerId}`)
+        const data: UserDto = await this.prisma.user.findFirst({where : {
+            id : playerId,
+        }});
+        if (!data)
             return null; // neeed to throw an error
         return data;
-        } catch (error) {
-        console.log("error 11111");
-    }
     }
     
     async getUserByUsername (username : string) : Promise<UserDto | null> {
@@ -89,4 +81,18 @@ export class UsersRepository {
         return "deleted";
     }
 
+    async updateIsEnabled(id: string, isenabled: boolean): Promise<UserDto> {
+
+        const user = await this.prisma.user.findUnique({where: {id}})
+
+        if (user) {
+            return await this.prisma.user.update({where: {id},
+                data: {
+                    IsEnabled: isenabled,
+                    TwoFASecret: null,
+                }});
+        }
+        else
+            throw new UnauthorizedException('user not valid !!')
+    }
 }

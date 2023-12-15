@@ -12,10 +12,12 @@ import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { UserDto } from 'src/DTOs/User/user.dto';
 import { UserService } from 'src/auth/Services/user.service';
 import { JwtAuth } from 'src/auth/Guards/jwt.guard';
+import { TwoFAService } from 'src/auth/Services/2FA.service';
+import { ConfigService } from '@nestjs/config';
 
 @Module({
     imports :[],
-    providers: [UsersRepository, PrismaService, FriendsRepository, InvitesRepository, MatchesRepository, messageRepository, converationRepositroy, PrismaService, AchievementRepository, CloudinaryService, JwtAuth, UserService],
+    providers: [UsersRepository, PrismaService, FriendsRepository, InvitesRepository, MatchesRepository, messageRepository, converationRepositroy, PrismaService, AchievementRepository, CloudinaryService, JwtAuth, UserService, TwoFAService, ConfigService],
     controllers : [settingsController],
 })
 export class SettingsModule {}

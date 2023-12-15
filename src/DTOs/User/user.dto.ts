@@ -20,8 +20,6 @@ export class UserDto {
 
     IsEnabled: boolean;
 
-    channels : string[];
-
     bandUsers : string[];
 
     online  :    boolean;

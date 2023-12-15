@@ -132,7 +132,7 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
         console.log("CREATE : ", userdto.id);
         if (!userdto)
             console.log("CREATE : userdto NOT VALID");
-        this.createNewGame(userdto.id, req.map, req.mod);
+        this.createNewGame(client.id, req.map, req.mod);
     }
 
     @SubscribeMessage("RANDOM")

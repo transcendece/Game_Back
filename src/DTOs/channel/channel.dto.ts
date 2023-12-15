@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString, Max, MaxLength } from "class-validator";
+import { IsNotEmpty, IsString, MaxLength } from "class-validator";
 
 export class channelDto {
     
@@ -9,14 +9,6 @@ export class channelDto {
     @IsNotEmpty({message : "channel name is empty ."})
     @MaxLength(20, {message : "name is too long"})
     name : string
-    
-    users ? : string[]; 
-    
-    admins ? : string[]; 
-    
-    mutedUsersId ? : string[];
-    
-    bannedUsers ? : string[];
     
     @IsString({message : "channel name must be a string ."})
     owner       ? : string;

@@ -1,15 +1,16 @@
-import { Body, Controller, Get, Param, Post, Put, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Put, Req, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
 import { UsersRepository } from 'src/modules/users/users.repository';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { UserDto } from 'src/DTOs/User/user.dto';
 import { settingsDto } from 'src/DTOs/settings/setting.dto';
 import { JwtAuth } from 'src/auth/Guards/jwt.guard';
+import { TwoFAService } from 'src/auth/Services/2FA.service';
 
 @Controller('Settings')
 export class settingsController {
-    constructor (private user: UsersRepository, private Cloudinary: CloudinaryService) {}
+    constructor (private user: UsersRepository, private Cloudinary: CloudinaryService, private TwoFaService: TwoFAService) {}
     @Get(':id')
     async GetUserData(@Param('id') id: string) : Promise<UserDto> {
         return await this.user.getUserById(id);
@@ -28,12 +29,30 @@ export class settingsController {
         console.log(heha);
     }
 
-    @Post('')
+    @Post('username')
     @UseGuards(JwtAuth)
-    async   updateUsername(@Body() data : settingsDto, @Req() req: Request & {user : UserDto}) : Promise<any> {
-        console.log(`id : ${req.user.id}`);
-        console.log(`username new : ${data}`);
-        if (data.username != req.user.username)
-            return await this.user.updateUsername(req.user.id, data.username);
+    async   updateUsername(@Res() res: Response, @Body() data : settingsDto, @Req() req: Request & {user : UserDto}) {
+
+        try {
+            const user = req.user
+            var userData = await this.user.updateUsername(user.id, data.username)
+            if (data.checked_ === false && data.checked_ !== req.user.IsEnabled) {
+
+                userData = await this.user.updateIsEnabled(user.id, data.checked_);
+                res.status(201).json(userData);
+            }
+            else if (data.checked_ === true && data.checked_ !== req.user.IsEnabled) {
+
+                var code = await this.TwoFaService.generate2FASecret(userData);
+                userData = await this.user.getUserById(userData.id);
+                res.status(201).json({code, userData});
+            }
+            else
+                res.status(201).json(userData)
+        }
+        catch (error) {
+
+            throw Error(error)
+        }
     }
 }

@@ -9,6 +9,7 @@ datasource database {
   provider = "postgresql"
   url      = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
+
 }
 
 model User {
@@ -27,33 +28,34 @@ model User {
   invitationRecieved    Invitation[] @relation("invitationReciever")
   avatar                String ? @default("http://res.cloudinary.com/dvmxfvju3/image/upload/v1700925320/wu4zkfcugvnsbykwmzpw.jpg")
   achievements          String[]
-  channels              String[]
   bandUsers             String[]
   online                Boolean ? @default(false)
   level                 Float @default(0)
+  channels              ChannelOnUser[]
+}
+
+model ChannelOnUser {
+ userId     String
+ channelId  String
+ user       User @relation(fields: [userId], references: [id], onDelete: Cascade)
+ channel    Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+ isAdmin    Boolean @default(false)
+ isOwner    Boolean @default(false)
+ isBanned   Boolean @default(false)
+ isMuted    Boolean @default(false)
+ until      DateTime
+ @@id([userId, channelId])
 }
 
 model Channel {
   id                    String   @id @default(uuid())
   name                  String   @unique
-  users                 String[]
-  admins                String[]
-  bannedUsers           String[]
+  users                 ChannelOnUser[]
   owner                 String ?
   IsPrivate             Boolean ?
   IsProtected           Boolean ?
   password              String ?
   passwordHash          String ?
-  mutedUsers            MutedUser[]
-  mutedUsersId          String[]
-}
-
-model MutedUser {
-  id        String    @id @default(uuid())
-  userId    String
-  channelId String
-  until     DateTime
-  Channel   Channel   @relation(fields: [channelId], references: [id])
 }
 
 model Friend {
