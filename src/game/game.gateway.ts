@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from "@nestjs/common";
+import { Injectable, OnModuleInit, UseFilters } from "@nestjs/common";
 import { Server, Socket } from "socket.io";
 import {
     ConnectedSocket,
@@ -26,6 +26,7 @@ import { GameService } from "./game.service";
 import { JwtService } from "@nestjs/jwt";
 import { UsersRepository } from "src/modules/users/users.repository";
 import { UserDto } from "src/DTOs/User/user.dto";
+import { AllExceptionsSocketFilter } from "./socketExceptionHandler";
 
 
 
@@ -42,7 +43,7 @@ const randomString = (length = 20) => {
     }
 })
 
-@Injectable()
+@UseFilters(new AllExceptionsSocketFilter())
 export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
 
     @WebSocketServer()
@@ -53,7 +54,9 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
     private Random: Map<string, GameService>;
     private friendGame: Record<string, GameService> = {};
     // private gamesProperties:  Record<string, GameDto > = {}
-    private randomQueue: string[] = [];
+    private randomBeg: string[] = [];
+    private randomInt: string[] = [];
+    private randomAdv: string[] = [];
 
     private gameDe: GameDependency = new GameDependency(0 , 0, 0.001 , 10, 8, '#000000', false, 1, 0, 0, Infinity, "red", 5, 5, 10, 'blue');
 
@@ -69,7 +72,8 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
             console.log('CClient connected:', userdto.id, " : ", client.id);
             if (userdto){
                 if (this.clients.has(userdto.id)) { //CLIENT ALREDY CONNECTED
-                    console.log("c alredy c: ", userdto.id);
+                    // console.log("c alredy c: ", userdto.id);
+                    console.log("alrady connected-------------");
                     client.emit('ERROR', "YOU ARE ALREDY CONNECTED...")
                     client.disconnect()
                 }
@@ -78,7 +82,7 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
                     // client.emit("connect", { "clientId" : userdto.id })
                     console.log("connected: ", client.connected);
                     
-                    console.log("client obj: ", this.clients.get(client.id));
+                    // console.log("client obj: ", this.clients.get(client.id));
                     await this.user.updateUserOnlineStatus(true, userdto.id);
                 }
             }
@@ -90,8 +94,7 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
             }
             
         }
-        
-        
+
         catch(error){
             console.log("user dosen't exist in database");
             client.emit('ERROR', "RAH KAN3REF BAK, IHCHEM")
@@ -105,18 +108,20 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
         try{
             let userdto: UserDto  = this.clients.get(client.id)[1]
             if (userdto){
-                await this.user.updateUserOnlineStatus(false, userdto.id);
-                this.clients.delete(userdto.id);
                 this.Random.forEach((value, key) => {
-                    if (value.ifPlayerInGame(userdto.id)){   
+                    if (value.ifPlayerInGame(client.id)){ 
+                        console.log("FIND THE GAME");
+                        
                         value.stop();
                         value.client1.emit("GAMEOVER")
                         value.client2.emit("GAMEOVER")
                         this.Random.delete(key);
                     }                
                 })
+                this.clients.delete(userdto.id);
                 client.disconnect();
                 console.log("connected: ", client.connected);
+                await this.user.updateUserOnlineStatus(false, userdto.id);
             }
         }catch(error){
             console.log("ERROR", this.clients.size);
@@ -140,7 +145,7 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
         try{
 
             let userdto: UserDto = this.clients.get(client.id)[1]
-            
+            this.clients.get(client.id)[0].emit("WAIT")
             console.log("RANDOM..... : ", userdto.id);
             if (!userdto)
                 console.log("RANDOM : userdto NOT VALID");
@@ -173,50 +178,30 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
 
     @SubscribeMessage("UPDATE")
     async updatePaddle(@MessageBody() req: {gameId: string, vec: Vector }, @ConnectedSocket() client : Socket){
-        console.log("UPDATE ....");
-        try{  
-            console.log("1 ....");
+        // console.log("UPDATE ....");
+        try{
+            // console.log("cliend sending the request : ", req);
+            
             let userdto: UserDto = this.clients.get(client.id)[1]
             let game: GameService = this.Random.get(req.gameId);
           // console.log("req UPDATE: ", req, " ", userdto.id);
             if (!userdto)
-                console.log("UPDATE : userdto NOT VALID");
-            console.log("2 ....");
-            console.log("ID: ", userdto.id, "|||ID2:  ", game.player2Id , "ID1:  ", game.player1Id);            
+                {console.log("UPDATE : userdto NOT VALID");throw "invalid user"}
+            // console.log("GAMEEEES:",game);
+            
+            // console.log("ID:-------------------------------- ", userdto.id, "|||ID2:  ", game.player2Id , "ID1:  ", game.player1Id);            
             if (client.id === game.player1Id){ 
-              console.log("BEZZY1: ", userdto.id );
               let vec: Vector = {x: req.vec.x ,y:780}
-              
               Body.setPosition(game.p1, vec);
             }
             else if (client.id === game.player2Id){
-                console.log("BEZZY2: ", userdto.id );
                 let vec : Vector = {x: req.vec.x ,y:20}
                 Body.setPosition(game.p2, vec);
             }
-            console.log("3 ....");
-            game.client1.emit('UPDATE', {
-                "ball"  : game.ball.position,
-                "p1"    : game.p1.position,
-                "p2"    : game.p2.position,
-                "score1": game.score1,
-                "score2": game.score2,
-            });
-
-            game.client2.emit('UPDATE', {
-                "ball"  : game.reverseVector(game.ball.position),
-                "p1"    : game.reverseVector(game.p1.position),
-                "p2"    : game.reverseVector(game.p2.position),
-                "score1": game.score1,
-                "score2": game.score2,
-            });
         }catch(err){
-            console.log("UPDATE EXEPTION!!!???   ");
+            console.log(err);
         }
-        console.log("end UPDATE.....");
-        
     }
-
     //GET USER FROM DATABASE
 
     private async getUser(client: Socket): Promise<UserDto> | null{
@@ -248,7 +233,7 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
         //     return;
 
         // }
-        console.log("ID: ",this.clients.get(player1));
+        // console.log("ID: ",this.clients.get(player1));
         
         this.Random.set(gameId, new GameService(this.clients.get(player1)[0],player1, gameId, gameMaps.BEGINNER, gameMods.DEFI));
         // console.log("RANDOM SIZE: ", this.Random.size);
@@ -259,7 +244,7 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
             console.log("CREATE NEW GAME:: ", player2);
             
             this.Random.get(gameId).setPlayer2(this.clients.get(player2)[0], player2);
-            console.log("QUEUE::::::: ", this.randomQueue);
+            console.log("QUEUE::::::: ", this.randomBeg);
             
             this.sendPlayDemand(player1, player2, gameId);
         }
@@ -268,32 +253,59 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
 
     private sendPlayDemand(p1: string, p2: string, gameId: string){
         // this.games[gameId].state = true;
-
-        this.clients.get(p1)[0].emit("PLAY", {
-            gameDependency: this.gameDe,
-            gameId: gameId,
-        })
-        console.log(p2);
+        console.log("GAMEID: ", gameId);
         
-        this.clients.get(p2)[0].emit("PLAY", {
-            gameDependency: this.gameDe,
-            gameId: gameId,
-        })
+        // this.clients.get(p1)[0].emit("PLAY", {
+        //     // gameDependency: this.gameDe,
+        //     gameId: gameId,
+        //     "ID"    :1,
+        //     "ball"  : 50,
+        //     "p1"    : 50,
+        //     "p2"    : 50,
+        //     "score1": 1,
+        //     "score2": 0,
+        // })
+        // console.log(p2);
+        
+        // this.clients.get(p2)[0].emit("PLAY", {
+        //     // gameDependency: this.gameDe,
+        //     gameId: gameId,
+        //     "ID"    :1,
+        //     "ball"  : 50,
+        //     "p1"    : 50,
+        //     "p2"    : 50,
+        //     "score1": 1,
+        //     "score2": 0,
+        // })
         // console.log("just a check : ", this.Random[gameId].ball);
         this.Random.get(gameId).startGame();
     }
 
 
     private createRandomGame (player: string, map: string, mod: string){
-
-        this.randomQueue.push(player)
-        console.log("RANDOMQUEUE:  ", this.randomQueue);
-        
-        if (this.randomQueue.length >= 2) {
-            const player1 = this.randomQueue.shift();
-            const player2 = this.randomQueue.shift();
-            console.log("p1 : ", player1," p2 :", player2);
-            
+        // const
+        if (map === "BEGINNER")this.randomBeg.push(player)
+        else if (map === "INTEMIDIER")this.randomInt.push(player)
+        else if (map === "ADVANCED")this.randomAdv.push(player)
+        console.log("RANDOMBeg:  ", this.randomBeg);
+        console.log("RANDOMInt:  ", this.randomInt);
+        console.log("RANDOMAdv:  ", this.randomAdv);
+        let player1: string;
+        let player2: string;
+        if (map === "BEGINNER" && this.randomBeg.length >= 2) {
+            player1 = this.randomBeg.shift();
+            player2 = this.randomBeg.shift();
+            this.createNewGame(player1 , map, mod, player2);
+        }
+        else if (map === "INTEMIDIER" && this.randomInt.length >= 2) {
+            player1 = this.randomInt.shift();
+            player2 = this.randomInt.shift();
+            this.createNewGame(player1 , map, mod, player2);
+        }
+        else if (map === "ADVANCED" && this.randomAdv.length >= 2) {
+            player1 = this.randomAdv.shift();
+            player2 = this.randomAdv.shift();
+            console.log("map: ", map, "p1 : ", player1," p2 :", player2);
             this.createNewGame(player1 , map, mod, player2);
         }
     }
@@ -303,3 +315,10 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
 
 
 
+/**
+ *  HANDLE TEH TYPE OF GAME
+ *  HANDLE END OF GAME
+ *  ......
+ * 
+ * 
+ */

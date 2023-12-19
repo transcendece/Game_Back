@@ -19,9 +19,16 @@ const width             :number = 600;
 const height            :number = 800;
 const paddleWidth       :number = 125;
 const paddleHeight      :number = 20;
-const maxScore          :number = 4;
-const AdvancedObs            :Body[] = [Bodies.rectangle(width / 2, height / 2, 800, 10, { isStatic: true , label: "ADV"})]
-const IntemidierObs            :Body[] = [Bodies.rectangle(width / 2, height / 2, 400, 10, { isStatic: true , label: "INTE"})]
+const AdvancedObs       :Body[] = [
+    Bodies.rectangle(width / 4, height / 4, 100, 10, { isStatic: true ,chamfer: { radius: 5}, label: "ADV"}),
+    Bodies.rectangle(3 * width / 4, 3 * height / 4, 100, 10, { isStatic: true ,chamfer: { radius: 5}, label: "ADV"}),
+]
+const IntemidierObs     :Body[] = [
+    Bodies.circle(width / 4, height / 4, 20, {isStatic: true, label: "INTE"}),
+    Bodies.circle(3 * width / 4, 3 * height / 4, 20, {isStatic: true, label: "INTE"}),
+    Bodies.circle(width / 4, 3 * height / 4, 20, {isStatic: true, label: "INTE"}),
+    Bodies.circle(3 * width / 4, height / 4, 20, {isStatic: true, label: "INTE"}),
+]
 
 
 @Injectable()
@@ -111,15 +118,16 @@ export class GameService{
         }
         else {
             this.maxVelocity = 10
-            if (this.mode === gameMods.DEFI)this.maxScore = 4;
+            if (this.mode === gameMods.DEFI)this.maxScore = 30;
             else   this.maxTime = 1;
        }
+       this.maxScore = 300;
     }
 
 
 
     public startGame(){
-        // console.log("START GAME ||||||||||||");
+        console.log("START GAME ||||||||||||");
         // this.isRunning = true
         this.client1.emit("START", {
             "ID"    :1,
@@ -128,6 +136,7 @@ export class GameService{
             "p2"    : this.p2.position,
             "score1": this.score1,
             "score2": this.score2,
+            gameId: this.id,
         });
         
         this.client2.emit("START", {
@@ -137,8 +146,11 @@ export class GameService{
             "p2"    : this.reverseVector(this.p2.position),
             "score1": this.score1,
             "score2": this.score2,
+            gameId: this.id,
         });
-
+        console.log("client1: ", this.client1.id);
+        console.log("client2: ", this.client2.id);
+        
         Runner.run(this.runner, this.engine);
         Composite.add(this.engine.world, [this.p1, this.p2 , ...this.grounds, ...this.obstacles]);
         this.spownBall();
@@ -181,10 +193,12 @@ export class GameService{
                     }
                 }
             });
-            if (this.score1 === maxScore || this.score2 === maxScore ){
+            if (this.score1 === this.maxScore || this.score2 === this.maxScore ){
                 this.stop();
-                this.score1 === maxScore ? this.client1.emit("WinOrLose", {content: "win"}) : this.client2.emit("WinOrLose", {content: "win"});
-                this.score1 === maxScore ? this.client2.emit("WinOrLose", {content: "lose"}) : this.client1.emit("WinOrLose", {content: "lose"});
+                console.log("MAX:" , this.maxScore);
+                
+                this.score1 === this.maxScore ? this.client1.emit("WinOrLose", {content: "win"}) : this.client2.emit("WinOrLose", {content: "win"});
+                this.score1 === this.maxScore ? this.client2.emit("WinOrLose", {content: "lose"}) : this.client1.emit("WinOrLose", {content: "lose"});
             }
         })}
         catch (error) {
@@ -195,7 +209,7 @@ export class GameService{
         // console.log("ball ====> : ",this.ball.position);
         // console.log("ball V ====> : ",this.ball.velocity);
         // console.log("ball F====> : ",this.ball.force);
-        
+
         Events.on(this.engine, "afterUpdate", ()=>{
             this.client1.emit('UPDATE', {
                 "ball"  : this.ball.position,
@@ -203,7 +217,8 @@ export class GameService{
                 "p2"    : this.p2.position,
                 "score1": this.score1,
                 "score2": this.score2,
-                });
+                // gameId: this.id
+            });
             
             this.client2.emit('UPDATE', {
                 "ball"  : this.reverseVector(this.ball.position),
@@ -211,6 +226,7 @@ export class GameService{
                 "p2"    : this.reverseVector(this.p2.position),
                 "score1": this.score1,
                 "score2": this.score2,
+                // gameId: this.id
             });
             // console.log("1 PLAYERs POS: ", this.p1.position, this.p2.position);
             // console.log("2 PLAYERs POS: ", this.reverseVector(this.p1.position), this.reverseVector(this.p2.position));
