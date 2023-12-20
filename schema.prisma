@@ -8,8 +8,7 @@ generator client {
 datasource database {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
-
+  // directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -29,9 +28,11 @@ model User {
   avatar                String ? @default("http://res.cloudinary.com/dvmxfvju3/image/upload/v1700925320/wu4zkfcugvnsbykwmzpw.jpg")
   achievements          String[]
   bandUsers             String[]
+  bandBy                String[]
   online                Boolean ? @default(false)
   level                 Float @default(0)
   channels              ChannelOnUser[]
+  isAuth                Boolean @default(false)
 }
 
 model ChannelOnUser {
@@ -56,6 +57,7 @@ model Channel {
   IsProtected           Boolean ?
   password              String ?
   passwordHash          String ?
+  channelMessages       ChannelMessage[]
 }
 
 model Friend {
@@ -102,8 +104,11 @@ model Message {
 model ChannelMessage {
   id                    String @id @default(uuid())
   sender                String
+  userId                String
   content               String
   channelName           String
+  channelId             String
+  channel               Channel @relation(fields: [channelId], references: [id], onDelete: Cascade)
 }
 
 model Match {

@@ -10,7 +10,8 @@ import { messageRepository } from "src/modules/message/message.repository";
 import { UsersRepository } from "src/modules/users/users.repository";
 import { ChannelsService } from "./chat.service";
 import { chatDto } from "src/DTOs/chat/chat.dto";
-import { send } from "process";
+import { AllExceptionsSocketFilter } from "./socket.exceptionHandler";
+import { UseFilters } from "@nestjs/common";
 
 @WebSocketGateway(8888, {
   cors: {
@@ -18,6 +19,7 @@ import { send } from "process";
     credentials: true
   }
 })
+@UseFilters(new AllExceptionsSocketFilter())
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
     constructor (private jwtService: JwtService, private user: UsersRepository, private conversation : converationRepositroy, private message: messageRepository, private channel : ChannelsService) {
         this.clientsMap = new Map<string, Socket>();
@@ -69,10 +71,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
   }
 
       async handleDisconnect(client: Socket) {
+        try {
           let cookie : string = client.client.request.headers.cookie;
           if (cookie) {
             const jwt:string = cookie.substring(cookie.indexOf('=') + 1)
-            console.log('here is the jwt : ', jwt);
             let user;
             user =  this.jwtService.verify(jwt);
             if (user) {
@@ -82,52 +84,60 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
                 await this.user.updateUserOnlineStatus(false, test.id)
                 console.log(`this is a test : ${test.id} ****`)
               }
-              this.clientsMap.delete(test.id);
+              console.log("disconnected : ", user.sub);
+              this.clientsMap.delete(user.sub);
             }
           }
+        } catch (error) {
+          return;
+        }
       }
 
       @SubscribeMessage('channelMessage')
       async handleChannelMessage(@MessageBody() message: channelMessageDto,@ConnectedSocket() client : Socket) {
         try {
           console.log("0 ===> ", message);
-          
           let cookie : string = client.client.request.headers.cookie;
-            if (cookie) {
-              const jwt:string = cookie.substring(cookie.indexOf('=') + 1)
-              let user;
-              user = await this.jwtService.verify(jwt);
-              if (user) {
-                console.log("1");
-                
-                const _user = await this.user.getUserById(user.sub)
-                if (_user) {
+          if (cookie) {
+            const jwt:string = cookie.substring(cookie.indexOf('=') + 1)
+            let user;
+            user = await this.jwtService.verify(jwt);
+            if (user) {
+              console.log("1");
+              
+              const _user = await this.user.getUserById(user.sub)
+              if (_user) {
+                  let channelId : string = "";
                   if (!_user.achievements.includes('https://res.cloudinary.com/dvmxfvju3/image/upload/v1699322994/vp6r4ephqymsyrzxgd0h.png')) {
                     await this.user.updateAcheivement('https://res.cloudinary.com/dvmxfvju3/image/upload/v1699322994/vp6r4ephqymsyrzxgd0h.png', _user.id)
                   }
-
+                  let tmpChannel : channelDto = await this.channel.getChannelByName(message.channelName)
+                  if (tmpChannel) {
+                    channelId = tmpChannel.id;
+                  }
                   let check : boolean = await this.channel.canSendMessageToChannel(_user.id, message.channelName)
+                  console.log("has privilage to send on channel :", check);
+                  
                   let sent : boolean = false;
                   if (check) {
                     let channelUsersIds : string[] = await this.channel.getChannelUsersId(message.channelName)
                     channelUsersIds.map((id)=> {
-                      let socket: Socket = this.clientsMap.get(id)
-                      if (socket) {
+                    let socket: Socket = this.clientsMap.get(id)
+                      if (socket && !_user.bandBy.includes(id) && !_user.bandUsers.includes(id)) {
                         message.sender = _user.username
                         sent = true;
                         socket.emit("channelMessage", message)
                       }
                     })
                   } else {
-                    console.log('no channel found');
                     let socket : Socket = this.clientsMap.get(_user.id)
                     if (socket){
-                      socket.emit("ERROR", "you can't Send Messages on this channel .... ")
+                      socket.emit("ERROR", "you can't Send This Message .... ");
                     }
                   }
                   if (sent) {
-                    await this.channel.createChannelMessage(message);
-                  }
+                    await this.channel.createChannelMessage(message, channelId, _user.id);
+                }
             }
           }
         }

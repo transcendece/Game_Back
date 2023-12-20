@@ -11,8 +11,10 @@ import {
 } from 'matter-js';
 
 import { Socket } from "socket.io";
+import { UserDto } from "src/DTOs/User/user.dto";
 
-import { gameMaps, gameMods } from "src/DTOs/game/game.dto";
+import { gameMods } from "src/DTOs/game/game.dto";
+import { PrismaService } from "src/modules/database/prisma.service";
 
 
 const width             :number = 600;
@@ -36,8 +38,10 @@ export class GameService{
     id              :string;             ;;;;;;;
     player1Id       :string;
     player2Id       :string;
+    user1Dto        :UserDto;
+    user2Dto        :UserDto;
     mode            :gameMods; // DEFI OR TIME
-    map             :gameMaps; // BEGINNER INTEMIDIER ADVANCED
+    map             :string; // BEGINNER INTEMIDIER ADVANCED
     serve           :boolean;
     client1         :Socket;
     client2         :Socket;
@@ -53,14 +57,15 @@ export class GameService{
     isRunning       :boolean;
 
     maxVelocity     :number;
-    score1          :number;
-    score2          :number;
+    public score1          :number;
+    public score2          :number;
     maxScore        :number;
     maxTime         :number; // in minutes
 
-    constructor(client: Socket,clientId: string,gameId: string , map: gameMaps, mode: gameMods){
+    constructor(private prisma: PrismaService , [client, userdto]: [Socket, UserDto],clientId: string,gameId: string , map: string, mode: gameMods){
         this.id = gameId;
         this.player1Id = clientId;
+        this.user1Dto = userdto;
         this.client1 = client;
         this.map = map;
         this.mode = mode;
@@ -102,31 +107,29 @@ export class GameService{
         
         this.obstacles = [];
         
-        if (this.map === gameMaps.ADVANCED)
+        if (this.map === "ADVANCED")
         {
             this.obstacles = AdvancedObs;
             this.maxVelocity = 20;
-            if (this.mode === gameMods.DEFI)this.maxScore = 7;
-            else   this.maxTime = 5;
+            this.maxScore = 7;
             
         }
-        else if (this.map === gameMaps.INTEMIDIER){
+        else if (this.map === "INTEMIDIER"){
             this.obstacles = IntemidierObs
             this.maxVelocity = 15
-            if (this.mode === gameMods.DEFI)this.maxScore = 5;
-            else   this.maxTime = 3;
+            this.maxScore = 5;
         }
-        else {
+        else if (this.map === "BEGINNER"){
             this.maxVelocity = 10
-            if (this.mode === gameMods.DEFI)this.maxScore = 30;
-            else   this.maxTime = 1;
+            this.maxScore = 3;
        }
-       this.maxScore = 300;
+       console.log("MAXSXORE: ", this.maxScore);
+       
     }
 
 
 
-    public startGame(){
+    public async startGame(){
         console.log("START GAME ||||||||||||");
         // this.isRunning = true
         this.client1.emit("START", {
@@ -137,6 +140,8 @@ export class GameService{
             "score1": this.score1,
             "score2": this.score2,
             gameId: this.id,
+            avatar: [this.user1Dto.avatar, this.user2Dto.avatar],
+            names: [this.user1Dto.username, this.user2Dto.username]
         });
         
         this.client2.emit("START", {
@@ -147,6 +152,8 @@ export class GameService{
             "score1": this.score1,
             "score2": this.score2,
             gameId: this.id,
+            avatar: [this.user1Dto.avatar, this.user2Dto.avatar],
+            names: [this.user1Dto.username, this.user2Dto.username]
         });
         console.log("client1: ", this.client1.id);
         console.log("client2: ", this.client2.id);
@@ -157,7 +164,7 @@ export class GameService{
         this.checkBallPosition();
         try
         {
-            Events.on(this.engine, "collisionStart", event =>{
+            Events.on(this.engine, "collisionStart", async event =>{
             let     stop : boolean = false; 
             event.pairs.forEach((pair)=>{
                 const bodyA :Body = pair.bodyA;
@@ -186,10 +193,13 @@ export class GameService{
 
                     const otherBody = bodyA === this.ball ? bodyB : bodyA;
                     if (otherBody.label === "TOP" || otherBody.label === "DOWN"){
-                        if (otherBody.label === "TOP")          this.score2++;
-                        else if (otherBody.label === "DOWN")    this.score1++;
+                        if (otherBody.label === "TOP")          this.score1++;
+                        else if (otherBody.label === "DOWN")    this.score2++;
+                        console.log(this.user1Dto.username , " : Score: ", this.score1);
+                        console.log(this.user2Dto.username , " : Score: ", this.score2);
+                        
                         Body.setPosition(this.ball, { x: 300, y: 400 });
-                        Body.setVelocity(this.ball, { x: 5, y: -5 });
+                        Body.setVelocity(this.ball, { x: this.ball.velocity.x < 0 ? 5 : -5 , y: this.ball.velocity.y > 0 ? 5:  -5});
                     }
                 }
             });
@@ -197,8 +207,43 @@ export class GameService{
                 this.stop();
                 console.log("MAX:" , this.maxScore);
                 
-                this.score1 === this.maxScore ? this.client1.emit("WinOrLose", {content: "win"}) : this.client2.emit("WinOrLose", {content: "win"});
-                this.score1 === this.maxScore ? this.client2.emit("WinOrLose", {content: "lose"}) : this.client1.emit("WinOrLose", {content: "lose"});
+                let winnerUser : UserDto;
+                let looserUser : UserDto;
+                this.score1 === this.maxScore ? 
+                    (this.client1.emit("WinOrLose", {content: "win"}), winnerUser = this.user1Dto)
+                    :( this.client2.emit("WinOrLose", {content: "win"}), winnerUser = this.user2Dto);
+                this.score1 === this.maxScore ? 
+                    (this.client2.emit("WinOrLose", {content: "lose"}), looserUser = this.user2Dto)
+                    : (this.client1.emit("WinOrLose", {content: "lose"}), looserUser = this.user1Dto);
+                //STORE THE GAME RESULT IN DATABASE
+                await this.prisma.match.create({
+                    data:{
+                        playerAId: this.user1Dto.id,
+                        playerBId: this.user2Dto.id,
+                        playerAScore: this.score1,
+                        playerBScore: this.score2,
+                    }
+                })
+                // if (!winnerUser || !LooserUser) 
+                //     return;
+                let winnerXp : number = (((this.user1Dto.level + 1) * 10) / 100) + winnerUser.level; 
+                let looserXp : number = ((looserUser.level * 2) / 100) + looserUser.level; 
+                await this.prisma.user.update({
+                    where: {
+                        id : winnerUser.id,
+                    },
+                    data :{
+                        level : winnerXp
+                    }
+                })
+                await this.prisma.user.update({
+                    where: {
+                        id : looserUser.id,
+                    },
+                    data :{
+                        level : looserXp,
+                    }
+                })
             }
         })}
         catch (error) {
@@ -206,9 +251,6 @@ export class GameService{
             
         }
 
-        // console.log("ball ====> : ",this.ball.position);
-        // console.log("ball V ====> : ",this.ball.velocity);
-        // console.log("ball F====> : ",this.ball.force);
 
         Events.on(this.engine, "afterUpdate", ()=>{
             this.client1.emit('UPDATE', {
@@ -239,8 +281,9 @@ export class GameService{
         this.player1Id = id;
         this.client1 = sock;
     }
-    public setPlayer2(sock: Socket, id: string){
+    public setPlayer2([sock, user]: [Socket, UserDto], id: string){
         this.player2Id = id;
+        this.user2Dto = user;
         console.log("added id : ", id);
         
         this.client2 = sock;
@@ -304,10 +347,6 @@ export class GameService{
         Runner.stop(this.runner);
         Engine.clear(this.engine);
         this.isRunning = false;
-    }
-
-    public run(){
-        
     }
 
     }

@@ -22,9 +22,13 @@ export class UserDto {
 
     bandUsers : string[];
 
+    bandBy    ? : string[];
+
     online  :    boolean;
 
     level : number;
+
+    isAuth ? : boolean;
 }
 
 export class TwoFaV {
