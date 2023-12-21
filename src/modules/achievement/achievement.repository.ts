@@ -72,7 +72,7 @@ export class AchievementRepository {
         ];
         achievements.forEach(async (data)=> {
                 await this.prisma.achievement.create({data});
-                console.log(data)
+                // console.log(data)
             })
             
             return achievements;

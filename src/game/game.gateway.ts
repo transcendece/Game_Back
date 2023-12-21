@@ -19,6 +19,8 @@ import { UsersRepository } from "src/modules/users/users.repository";
 import { UserDto } from "src/DTOs/User/user.dto";
 import { AllExceptionsSocketFilter } from "./socketExceptionHandler";
 import { PrismaService } from "src/modules/database/prisma.service";
+import { number } from "zod";
+import { log } from "console";
 
 
 
@@ -55,13 +57,14 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
     };
     async handleConnection(client: Socket, ...args: any[]) {
         console.log("connect ...")
+        
         try{
             let userdto: UserDto | null = await this.getUser(client)
             console.log('CClient connected:', userdto.id, " : ", client.id);
             if (userdto){
-                if (this.clients.has(userdto.id)) { //CLIENT ALREDY CONNECTED
+                if (this.clientInMap(userdto.id)) { //CLIENT ALREDY CONNECTED
                     console.log("alrady connected-------------");
-                    client.emit('ERROR', "YOU ARE ALREDY CONNECTED...")
+                    client.emit('REDIRECT', "/profil")
                     client.disconnect()
                 }
                 else{
@@ -84,13 +87,19 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
             client.emit('ERROR', "RAH KAN3REF BAK, IHCHEM")
             client.disconnect()
         }
+        this.printMap("CONNECT")
         console.log("end connect ....");
     }
     
     async handleDisconnect(client: Socket) {
         console.log("disconnect ...")
+        this.printMap("DISCONNECT");
         try{
-            let userdto: UserDto  = this.clients.get(client.id)[1]
+            let userdto: UserDto| null = null;
+            if (this.clients.has(client.id))
+                userdto = this.clients.get(client.id)[1]
+            else
+                //REDIRECT TO PROFILE
             if (userdto){
                 this.Random.forEach((value, key) => {
                     if (value.ifPlayerInGame(client.id)){ 
@@ -105,10 +114,10 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
                     }                
                 })
                 this.clients.delete(userdto.id);
-                client.disconnect();
                 console.log("connected: ", client.connected);
                 await this.user.updateUserOnlineStatus(false, userdto.id);
             }
+            client.disconnect();
         }catch(error){
             console.log("ERROR", this.clients.size);
             client.disconnect();
@@ -197,7 +206,6 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
             const user = this.jwtService.verify(cookie.substring(cookie.indexOf("=") + 1));
             if (user){
                 const userdto: UserDto = await this.user.getUserById(user.sub);
-                console.log("cookie: ", cookie);
                 if (userdto)
                     return userdto;
             }
@@ -292,6 +300,24 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
             player2 = this.randomAdv.shift();
             console.log("map: ", map, "p1 : ", player1," p2 :", player2);
             this.createNewGame(player1 , map, mod, player2);
+        }
+    }
+
+    private clientInMap(dtoId: string): boolean{
+        // this.clients.forEach((value, key)=>{
+        // })
+        
+        for (let [key, value] of this.clients) {
+            if (value[1].id === dtoId)
+                return (console.log("TRUE  UUUUUUUUUUUUU"),true)
+        }
+        return (console.log("FALSE  UUUUUUUUUUUUU"),false);
+    }
+
+    private printMap(s: string){
+        log("Maap: ",s)
+        for (let [key, value] of this.clients) {
+                console.log("   ", {key: key, sockId: value[0].id, dtoId: value[1].id})
         }
     }
 
