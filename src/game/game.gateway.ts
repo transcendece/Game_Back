@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit, UseFilters } from "@nestjs/common";
+import { Injectable, OnModuleInit, Redirect, UseFilters } from "@nestjs/common";
 import { Server, Socket } from "socket.io";
 import {
     ConnectedSocket,
@@ -21,6 +21,8 @@ import { AllExceptionsSocketFilter } from "./socketExceptionHandler";
 import { PrismaService } from "src/modules/database/prisma.service";
 import { number } from "zod";
 import { log } from "console";
+import { EventPattern, Payload } from "@nestjs/microservices";
+import { MatchMaking } from "src/DTOs/User/matchMaking";
 
 
 
@@ -36,7 +38,7 @@ const randomString = (length = 20) => {
         credentials: true,
     }
 })
-
+@Injectable()
 @UseFilters(new AllExceptionsSocketFilter())
 export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
 
@@ -64,8 +66,11 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
             if (userdto){
                 if (this.clientInMap(userdto.id)) { //CLIENT ALREDY CONNECTED
                     console.log("alrady connected-------------");
-                    client.emit('REDIRECT', "/profil")
-                    client.disconnect()
+                    client.emit("REDIRECT", { "url" : '/profile'});
+                    console.log("alrady connected-------------");
+                   
+                        client.disconnect();
+                    // client.disconnect();
                 }
                 else{
                     this.clients.set(client.id, [client, userdto]);
@@ -92,14 +97,17 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
     }
     
     async handleDisconnect(client: Socket) {
-        console.log("disconnect ...")
-        this.printMap("DISCONNECT");
+        console.log("disconnect ...:", client.id)
         try{
             let userdto: UserDto| null = null;
             if (this.clients.has(client.id))
-                userdto = this.clients.get(client.id)[1]
+            userdto = this.clients.get(client.id)[1]
             else
-                //REDIRECT TO PROFILE
+                client.emit("REDIRECT", { "url" : '/profile'});
+            //REDIRECT TO PROFILE
+            console.log("                   userDto: ", userdto);
+            this.printMap("DISCONNECT");
+            
             if (userdto){
                 this.Random.forEach((value, key) => {
                     if (value.ifPlayerInGame(client.id)){ 
@@ -113,7 +121,7 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
                         this.Random.delete(key);
                     }                
                 })
-                this.clients.delete(userdto.id);
+                this.clients.delete(client.id);
                 console.log("connected: ", client.connected);
                 await this.user.updateUserOnlineStatus(false, userdto.id);
             }
@@ -197,8 +205,15 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
             console.log(err);
         }
     }
-    //GET USER FROM DATABASE
 
+    // @EventPattern('FRIEND')
+    // @SubscribeMessage("FRIEND")
+    handleGameEvent(@Payload() data: MatchMaking) {
+        console.log("data:: =====>", data);
+    }
+
+
+    //GET USER FROM DATABASE
     private async getUser(client: Socket): Promise<UserDto> | null{
         let cookie : string = client.client.request.headers.cookie;
         
@@ -220,17 +235,8 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
         console.log(`state: ${state} p1: ${player1} p2: ${player2}`);
 
         const gameId = randomString(20);
-        // console.log("game id : " + gameId);
-        // console.log("user : " + player1);
-        // if (!player1) {
-        //     console.log("hhhhh");
-        //     return;
-
-        // }
-        // console.log("ID: ",this.clients.get(player1));
         
         this.Random.set(gameId, new GameService(this.prisma, this.clients.get(player1),player1, gameId, map, gameMods.DEFI));
-        // console.log("RANDOM SIZE: ", this.Random.size);
 
         if (!state)
             this.clients.get(player1)[0].emit("CREATE", { gameId : "gameId", });
@@ -246,31 +252,6 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
 
 
     private sendPlayDemand(p1: string, p2: string, gameId: string){
-        // this.games[gameId].state = true;
-        
-        // this.clients.get(p1)[0].emit("PLAY", {
-        //     // gameDependency: this.gameDe,
-        //     gameId: gameId,
-        //     "ID"    :1,
-        //     "ball"  : 50,
-        //     "p1"    : 50,
-        //     "p2"    : 50,
-        //     "score1": 1,
-        //     "score2": 0,
-        // })
-        // console.log(p2);
-        
-        // this.clients.get(p2)[0].emit("PLAY", {
-        //     // gameDependency: this.gameDe,
-        //     gameId: gameId,
-        //     "ID"    :1,
-        //     "ball"  : 50,
-        //     "p1"    : 50,
-        //     "p2"    : 50,
-        //     "score1": 1,
-        //     "score2": 0,
-        // })
-        // console.log("just a check : ", this.Random[gameId].ball);
         this.Random.get(gameId).startGame();
     }
 

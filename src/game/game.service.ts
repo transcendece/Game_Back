@@ -110,7 +110,7 @@ export class GameService{
         if (this.map === "ADVANCED")
         {
             this.obstacles = AdvancedObs;
-            this.maxVelocity = 20;
+            this.maxVelocity = 10; //change
             this.maxScore = 7;
             
         }
@@ -169,6 +169,7 @@ export class GameService{
             event.pairs.forEach((pair)=>{
                 const bodyA :Body = pair.bodyA;
                 const bodyB : Body = pair.bodyB;
+                if ((this.ball.velocity.x <= 0.001 && this.ball.velocity.x >= -0.001) || (this.ball.velocity.y <= 0.001 && this.ball.velocity.y >= -0.001))console.log("v.x: ", this.ball.velocity.x, " v.y: ", this.ball.velocity.y);
                 
                 if (bodyA === this.ball || bodyB == this.ball){
                     const normal = pair.collision.normal;
@@ -226,8 +227,9 @@ export class GameService{
                 })
                 // if (!winnerUser || !LooserUser) 
                 //     return;
-                let winnerXp : number = (((this.user1Dto.level + 1) * 10) / 100) + winnerUser.level; 
-                let looserXp : number = ((looserUser.level * 2) / 100) + looserUser.level; 
+                let winnerXp : number = Number(((((this.user1Dto.level + 1) * 10) / 100) + winnerUser.level).toPrecision(2)); 
+                let looserXp: number  = Number((((looserUser.level * 2) / 100) + looserUser.level).toPrecision(2));
+                
                 await this.prisma.user.update({
                     where: {
                         id : winnerUser.id,

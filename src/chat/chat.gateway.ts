@@ -11,7 +11,9 @@ import { UsersRepository } from "src/modules/users/users.repository";
 import { ChannelsService } from "./chat.service";
 import { chatDto } from "src/DTOs/chat/chat.dto";
 import { AllExceptionsSocketFilter } from "./socket.exceptionHandler";
-import { UseFilters } from "@nestjs/common";
+import { Inject, UseFilters } from "@nestjs/common";
+import { MatchMaking } from "src/DTOs/User/matchMaking";
+import { ClientProxy } from "@nestjs/microservices";
 
 @WebSocketGateway(8888, {
   cors: {
@@ -21,7 +23,14 @@ import { UseFilters } from "@nestjs/common";
 })
 @UseFilters(new AllExceptionsSocketFilter())
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
-    constructor (private jwtService: JwtService, private user: UsersRepository, private conversation : converationRepositroy, private message: messageRepository, private channel : ChannelsService) {
+    constructor (
+      private jwtService: JwtService, 
+      private user: UsersRepository, 
+      private conversation : converationRepositroy, 
+      private message: messageRepository, 
+      private channel : ChannelsService,
+      @Inject('GameGeteway') private gameGateway: ClientProxy,
+      ) {
         this.clientsMap = new Map<string, Socket>();
     }
     @WebSocketServer() server: Server;
@@ -148,6 +157,68 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
           console.log(error);
         }
       }
+      
+      @SubscribeMessage('SendGameInvite')
+      async HandleGameInvite(@MessageBody("recieverId") recieverId : string, @ConnectedSocket() client : Socket) {
+        try {
+
+          console.log("reciever : ", recieverId);
+          // need to check if the user is already in game or not before sending the notification 
+          let cookie : string = client.client.request.headers.cookie;
+          if (cookie) {
+            const jwt:string = cookie.substring(cookie.indexOf('=') + 1)
+            let user;
+            user =  this.jwtService.verify(jwt);
+            if (user) {
+              let customer : Socket = this.clientsMap.get(user.sub)
+              if (customer) {
+                customer.emit("GameInvite", "YOU HAVE BEEN INVITED TO PLAY ...")
+              }
+              else {
+                client.emit("ERROR", `${recieverId} is Not Online For the moment `)
+              }
+            }
+          }
+        } catch (error) {
+        }
+      }
+      
+      @SubscribeMessage('AccepteGameInvite')
+      async HandleGame(@MessageBody() game: MatchMaking, @ConnectedSocket() client : Socket) {
+        try {
+          console.log("creating game : ", game);
+          let cookie : string = client.client.request.headers.cookie;
+          if (cookie) {
+            const jwt:string = cookie.substring(cookie.indexOf('=') + 1)
+            let user;
+            user =  this.jwtService.verify(jwt);
+            if (user) {
+              // here we emit to the game gateway to start the game when these id's are connected
+              // emit to the users a redirection action ...
+              let playerA : Socket = this.clientsMap.get(game.playerA)
+              let playerB : Socket = this.clientsMap.get(game.playerB)
+              if (playerA && playerB) {
+                console.log("a & b t a: ", game.playerA, " b: ", game.playerB);
+                // console.log(this.gameGateway.isConnected());   
+                await this.gameGateway.send('ping', {}).toPromise();
+                console.log('Connected to GameGateway');
+                playerA.emit("EnterGame", "Ok")
+                playerB.emit("EnterGame", "Ok")
+                this.gameGateway.emit("FRIEND", game)
+              }
+              else {
+                console.log("a & b f a: ", playerA, " b: ", playerB);
+                if (!playerA && playerB)
+                  playerB.emit("ERROR", "Can't play Game the other player wen't offline ...");
+                else if (!playerB && playerA)
+                  playerA.emit("ERROR", "Can't play Game the other player wen't offline ...");
+              }
+            }
+          }
+        } catch (error) {
+        }
+      }
+
 
       @SubscribeMessage('SendMessage')
         async hanldeMessage(@MessageBody() message: messageDto, @ConnectedSocket() client : Socket) {
@@ -159,8 +230,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
               user =  this.jwtService.verify(jwt);
               if (user) {
                   const sender = await this.user.getUserById(user.sub);
-                  const reciever = await this.user.getUserByUsername(message.recieverId);
+                  const reciever = await this.user.getUserById(message.recieverId);
                   if (!sender || !reciever || (sender.id == reciever.id)) {
+                    client.emit("ERROR", "YOU CAN't Text yourself Go buy a Note Book !")
                     throw("invalid data : Wrong sender or reciever info.")
                   }
                   if (reciever.bandUsers.includes(sender.id)) {
@@ -197,7 +269,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
       async sendToSocket(message: messageDto) {
         try {
           console.log('message in send socket : ',message)
-          let _reciever : UserDto = await this.user.getUserByUsername(message.recieverId)
+          let _reciever : UserDto = await this.user.getUserById(message.recieverId)
+          console.log("reciever is : ", _reciever);
           if (_reciever) {
             const socket: Socket = this.clientsMap.get(_reciever.id);
             await this.message.CreateMesasge(message);
@@ -209,7 +282,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
               data.avatar = _reciever.avatar
               data.isOwner = false
               data.conversationId = message.conversationId 
-              socket.emit('RecieveMessage', data); // Replace 'your-event-name' with the actual event name
+              socket.emit('RecieveMessage', data);
             } else {
               this.conversation.updateConversationDate(message.conversationId)
               console.error(`Socket with ID ${message.recieverId} not found.`);

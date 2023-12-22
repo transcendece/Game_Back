@@ -7,7 +7,13 @@ export class frontData {
     
     username : string;
 
-    owner : string;
+    senderId  : string;
+
+    recieverId : string;
+
+    sender  : string;
+
+    reciever : string;
 
     online : boolean;
 

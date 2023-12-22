@@ -9,11 +9,13 @@ import { messageRepository } from 'src/modules/message/message.repository';
 import { UsersRepository } from 'src/modules/users/users.repository';
 import { GameController } from './game.controller';
 import { GameGeteway } from './game.gateway';
+import { ChatGateway } from 'src/chat/chat.gateway';
+import { ChannelsService } from 'src/chat/chat.service';
 
 @Module({
     imports :[],
-    providers: [ 
-        GameGeteway ,
+    providers: [
+        GameGeteway,
         UsersRepository, 
         PrismaService,
         FriendsRepository,
