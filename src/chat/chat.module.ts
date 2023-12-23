@@ -15,7 +15,7 @@ import { GameGeteway } from 'src/game/game.gateway';
 
 @Module({
     imports :[],
-    providers: [UsersRepository, PrismaService, FriendsRepository, InvitesRepository, MatchesRepository, messageRepository, converationRepositroy, PrismaService, AchievementRepository, ChatGateway, InvitesRepository, UserService, ChannelsService ,GameGeteway],
+    providers: [UsersRepository, PrismaService, FriendsRepository, InvitesRepository,ChatGateway,  MatchesRepository, messageRepository, converationRepositroy, PrismaService, AchievementRepository, InvitesRepository, UserService, ChannelsService],
     controllers: [ChatController],
 })
 export class ChatModule {}
