@@ -213,7 +213,7 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
     }
 
     @OnEvent('chat.INVITE')
-    handleChatMessage(payload: any) {
+    handleChatMessage(payload: {recieverId: string, senderId: string}) {
         // handle the message
         console.log("HHHH");
         
