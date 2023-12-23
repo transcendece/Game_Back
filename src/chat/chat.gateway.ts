@@ -16,6 +16,7 @@ import { MatchMaking } from "src/DTOs/User/matchMaking";
 import { ClientProxy } from "@nestjs/microservices";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { use } from "passport";
+import { email } from "valibot";
 
 @WebSocketGateway(8888, {
   cors: {
@@ -163,24 +164,20 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
       @SubscribeMessage('INVITE')
       async HandleGameInvite(@MessageBody() recieverId : string, @ConnectedSocket() client : Socket) {
         try {
-
-          console.log("reciever : ", recieverId);
+          
           // need to check if the user is already in game or not before sending the notification 
           let cookie : string = client.client.request.headers.cookie;
           if (cookie) {
             const jwt:string = cookie.substring(cookie.indexOf('=') + 1)
             let user;
             user =  this.jwtService.verify(jwt);
+            console.log("reciever : ", recieverId);
+            console.log("ahjkhadfhadjkfhadjhf : ", user);
+            
             if (user) {
               let customer : Socket = this.clientsMap.get(recieverId)
-              console.log("customer: ", customer.id);
-              
               if (customer) {
                 customer.emit("GameInvite",{ recieverId: recieverId, senderId: user.sub})
-
-                // this.eventEmitter.emit('chat.INVITE', recieverId, user.sub);
-                console.log("CHAT G: r: ", recieverId, " sub: ", user.sub);
-                
               }
               else {
                 client.emit("ERROR", `${recieverId} is Not Online For the moment `)
@@ -197,17 +194,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
           console.log("creating game : ", res.state);
           let cookie : string = client.client.request.headers.cookie;
           if (cookie) {
+            let playerA : Socket;
+            let playerB : Socket;
             const jwt:string = cookie.substring(cookie.indexOf('=') + 1)
             let user;
             user =  this.jwtService.verify(jwt);
             if (user && res.state === "OK") {
               // here we emit to the game gateway to start the game when these id's are connected
               // emit to the users a redirection action ...
-              let playerA : Socket = this.clientsMap.get(res.recieverId)
-              let playerB : Socket = this.clientsMap.get(res.senderId)
+              playerA  = this.clientsMap.get(res.recieverId)
+              playerB  = this.clientsMap.get(res.senderId)
               if (playerA && playerB) {
-                // console.log("a & b t a: ", game.playerA, " b: ", game.playerB);
-                // console.log(this.gameGateway.isConnected());   
                 playerA.emit("EnterGame", "OK")
                 playerB.emit("EnterGame", "OK")
                 this.eventEmitter.emit("chat.INVITE", {recieverId : res.recieverId, senderId: res.senderId})
@@ -219,10 +216,21 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
                   playerA.emit("ERROR", "Can't play Game the other player wen't offline ...");
               }
             }
+            else {
+              playerA  = this.clientsMap.get(res.recieverId)
+              playerB  = this.clientsMap.get(res.senderId)
+              if (playerA && playerB) {
+                playerA.emit("ERROR", "invite Canceled .")
+                playerB.emit("ERROR", "invite Canceled .")
+              }
+              else {
+                client.emit("ERROR", "invitation Declined ...")
+              }
+            }
             console.log("received in GameInvite : ", res.senderId,"   ", res.recieverId);
-             
           }
         } catch (error) {
+          client.emit("ERROR", "TRY AGAIN LATER ....")
         }
       }
 
@@ -300,25 +308,4 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
             console.log(error)
           }
         }
-
-
-
-
-        // @SubscribeMessage('INVITE')
-        // handleInvite(client: any, payload: {home: string, away: string}): void {
-        //   console.log("PAYLOD : " , payload);
-          
-        //   this.eventEmitter.emit('chat.INVITE', payload);
-        //   client.emit("INVITE", "OK");
-        //   //redirect to game
-        // }   
-
-        @SubscribeMessage('CANCEL')
-        handleCANCEL(client: any, payload: {away: string}): void {
-          this.eventEmitter.emit('chat.CANCEL', {game: 'hamza'});
-        }   
-        @SubscribeMessage('ACCEPTE')
-        handleACCEPTE(client: any, payload: {away: string}): void {
-          this.eventEmitter.emit('chat.ACCEPTE', {game: 'hamza'});
-        }   
 }
