@@ -44,10 +44,10 @@ export class ChatController {
                         let _reciever : UserDto = await this.user.getUserById(conversations[index].recieverId)
                         if (_sender && _reciever && !_sender.bandUsers.includes(_reciever.id) && !_reciever.bandUsers.includes(_sender.id)) {
                             tmp.Conversationid = conversations[index].id;
-                            tmp.recieverId = _reciever.id;
-                            tmp.reciever = _reciever.username;
-                            tmp.senderId = _sender.id;
-                            tmp.sender = _sender.username;
+                            tmp.recieverId = (_user.id == _sender.id) ? _reciever.id : _sender.id;
+                            tmp.reciever = (_user.id == _sender.id) ? _reciever.username : _sender.username;
+                            tmp.senderId = (_user.id == _reciever.id) ? _reciever.id : _sender.id;
+                            tmp.sender = (_user.id == _reciever.id) ? _reciever.username : _sender.username;
                             tmp.avatar = (_user.username == _sender.username) ? _reciever.avatar : _sender.avatar;
                             tmp.username = (_user.username == _sender.username) ? _reciever.username : _sender.username;
                             tmp.online = false;
