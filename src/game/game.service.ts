@@ -279,6 +279,7 @@ export class GameService{
 
     }   
 
+    public
     public setPlayer1(sock: Socket, id: string){
         this.player1Id = id;
         this.client1 = sock;

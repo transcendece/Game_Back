@@ -24,6 +24,7 @@ import { log } from "console";
 import { EventPattern, Payload } from "@nestjs/microservices";
 import { MatchMaking } from "src/DTOs/User/matchMaking";
 import { OnEvent } from "@nestjs/event-emitter";
+import { from } from "rxjs";
 
 
 
@@ -49,21 +50,27 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
 
     private clients:Map<string, [Socket, UserDto]> ;
     private Random: Map<string, GameService>;
-    private friendGame: Record<string, GameService> = {};
+    private friendGame: Record<string, GameService>;
     private randomBeg: string[] = [];
     private randomInt: string[] = [];
     private randomAdv: string[] = [];
+    private index: number;
+    private friend: Map<number, [[string, boolean], [string, boolean]]>;
 
     constructor(private jwtService: JwtService, private user: UsersRepository, private prisma : PrismaService){
         this.clients = new Map<string, [Socket, UserDto]>();
         this.Random = new Map<string, GameService>();
+        this.friend = new Map<number, [[string, boolean], [string, boolean]]>();
+        this.index = 0;
     };
-    async handleConnection(client: Socket, ...args: any[]) {
+    async handleConnection( client: Socket, ...args: any[]) {
         console.log("connect ...")
         
         try{
             let userdto: UserDto | null = await this.getUser(client)
             console.log('CClient connected:', userdto.id, " : ", client.id);
+            console.log("FREIND MAP:  ", this.friend);
+            
             if (userdto){
                 if (this.clientInMap(userdto.id)) { //CLIENT ALREDY CONNECTED
                     console.log("alrady connected-------------");
@@ -77,6 +84,8 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
                     this.clients.set(client.id, [client, userdto]);
                     // client.emit("connect", { "clientId" : userdto.id })
                     console.log("connected: ", client.connected);
+                    console.log();
+                    
 
 
                     /**
@@ -85,6 +94,7 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
                     
                     // console.log("client obj: ", this.clients.get(client.id));
                     await this.user.updateUserOnlineStatus(true, userdto.id);
+                    this.checkFriendsMatch(client.id)
                 }
             }
             else{
@@ -94,25 +104,22 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
             }   
         }
         catch(error){
-            console.log("user dosen't exist in database");
+            console.log("user dosen't exist in databaseaaaaaaaaa", error);
             client.emit('ERROR', "RAH KAN3REF BAK, IHCHEM")
             client.disconnect()
         }
-        this.printMap("CONNECT")
+        // this.printMap("CONNECT")
         console.log("end connect ....");
     }
     
     async handleDisconnect(client: Socket) {
-        console.log("disconnect ...:", client.id)
         try{
+            console.log("disconnect ...:", client.id)
             let userdto: UserDto| null = null;
-            if (this.clients.has(client.id))
-            userdto = this.clients.get(client.id)[1]
-            else
-                client.emit("REDIRECT", { "url" : '/profile'});
+            if (this.clients.has(client.id)) userdto = this.clients.get(client.id)[1]
+            // else  client.emit("REDIRECT", { "url" : '/profile'});
             //REDIRECT TO PROFILE
-            console.log("                   userDto: ", userdto);
-            this.printMap("DISCONNECT");
+            console.log("                   userDto: ", userdto.id ," ", userdto.username);
             
             if (userdto){
                 this.Random.forEach((value, key) => {
@@ -127,18 +134,48 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
                         this.Random.delete(key);
                     }                
                 })
+
+                //CLEAR THE ARRAY OF GAME MODS !!!!!!!!!
                 this.clients.delete(client.id);
                 console.log("connected: ", client.connected);
                 await this.user.updateUserOnlineStatus(false, userdto.id);
             }
-            client.disconnect();
+            // client.disconnect();
         }catch(error){
             console.log("ERROR", this.clients.size);
-            client.disconnect();
+            console.log("msg : ", error);
+            
+            // client.disconnect();
         }
         console.log("end disconnect ...")
     };
 
+
+    private checkFriendsMatch(id: string){
+        log("check : ", this.clients.get(id)[1].id)
+        const userId = this.clients.get(id)[1].id;
+        for (let [key, value] of this.friend){
+            if (userId === value[0][0] || userId === value[1][0]){
+                if (value[0][1] === false && value[1][1] === false){
+                    this.clients.get(id)[0].emit("WAIT");
+                    userId === value[0][0] ? value[0][1] = true : value[1][1] = true
+                }
+                else{
+                    this.clients.get(id)[0].emit("WAIT");
+                    let player2Id = this.getSockId(value[0][1] === false ? value[1][0]: value[0][0])
+                    if (player2Id.length != 0){
+                        console.log("p1::::: ", this.clients.get(id)[0].id, " p2::::: ", player2Id);
+                        this.createNewGame(this.clients.get(id)[0].id, "ADVANCED", "", player2Id)
+                    }
+                    
+                    this.friend.delete(key);
+                    console.log("FREIND MAP after delete:  ", this.friend);
+                    
+                }
+            }
+                
+        }
+    }
 
     @SubscribeMessage("CREATE")
     async createGame(@MessageBody() req: {map: string, mod: string}, @ConnectedSocket() client : Socket){
@@ -213,11 +250,12 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
     }
 
     @OnEvent('chat.INVITE')
-    handleChatMessage(payload: {recieverId: string, senderId: string}) {
+    handleChatMessage(payload: {recieverId: string, senderId: string/**add mod */}) {
         // handle the message
         console.log("HHHH");
-        
         console.log("HELLLLLLLLLLLLLLLLLLLLLLLLLLLLO--------------------------", payload);
+        if (payload && payload.recieverId && payload.senderId)
+            this.friend.set(this.index++, [[payload.recieverId, false], [payload.senderId, false]]);
     }
 
 
@@ -302,12 +340,20 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
         }
         return (console.log("FALSE  UUUUUUUUUUUUU"),false);
     }
-
-    private printMap(s: string){
-        log("Maap: ",s)
+    private getSockId(dtoId: string): string{
+        
         for (let [key, value] of this.clients) {
-                console.log("   ", {key: key, sockId: value[0].id, dtoId: value[1].id})
+            if (value[1].id === dtoId)
+                return (log("keeeeey: ", key),key)
         }
+        return ('');
     }
+
+    // private printMap(s: string){
+    //     log("Maap: ",s)
+    //     for (let [key, value] of this.clients) {
+    //             console.log("   ", {key: key, sockId: value[0].id, dtoId: value[1].id})
+    //     }
+    // }
 
 }

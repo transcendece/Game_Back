@@ -161,6 +161,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
         }
       }
       
+
+      //Invite client 
       @SubscribeMessage('INVITE')
       async HandleGameInvite(@MessageBody() recieverId : string, @ConnectedSocket() client : Socket) {
         try {
