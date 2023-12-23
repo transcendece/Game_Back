@@ -65,18 +65,18 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
     };
     async handleConnection( client: Socket, ...args: any[]) {
         console.log("connect ...")
-        
+
         try{
             let userdto: UserDto | null = await this.getUser(client)
-            console.log('CClient connected:', userdto.id, " : ", client.id);
             console.log("FREIND MAP:  ", this.friend);
-            
+
             if (userdto){
+                console.log('CClient connected:', userdto.id, " : ", client.id);
                 if (this.clientInMap(userdto.id)) { //CLIENT ALREDY CONNECTED
                     console.log("alrady connected-------------");
                     client.emit("REDIRECT", { "url" : '/profile'});
                     console.log("alrady connected-------------");
-                   
+
                         client.disconnect();
                     // client.disconnect();
                 }
@@ -85,13 +85,13 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
                     // client.emit("connect", { "clientId" : userdto.id })
                     console.log("connected: ", client.connected);
                     console.log();
-                    
+
 
 
                     /**
                      *  check if the client invite from the chat gateway
                      */
-                    
+
                     // console.log("client obj: ", this.clients.get(client.id));
                     await this.user.updateUserOnlineStatus(true, userdto.id);
                     this.checkFriendsMatch(client.id)
@@ -101,7 +101,7 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
                 console.log("User dosen't exist in database");
                 client.emit('ERROR', "YOU ARE NOT EXIST IN DATABASE")
                 client.disconnect();
-            }   
+            }
         }
         catch(error){
             console.log("user dosen't exist in databaseaaaaaaaaa", error);
@@ -111,7 +111,7 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
         // this.printMap("CONNECT")
         console.log("end connect ....");
     }
-    
+
     async handleDisconnect(client: Socket) {
         try{
             console.log("disconnect ...:", client.id)
@@ -120,19 +120,19 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
             // else  client.emit("REDIRECT", { "url" : '/profile'});
             //REDIRECT TO PROFILE
             console.log("                   userDto: ", userdto.id ," ", userdto.username);
-            
+
             if (userdto){
                 this.Random.forEach((value, key) => {
-                    if (value.ifPlayerInGame(client.id)){ 
+                    if (value.ifPlayerInGame(client.id)){
                         console.log("FIND THE GAME");
-                        
+
                         value.stop();
                         //
                         value.client1.emit("GAMEOVER")
                         value.client2.emit("GAMEOVER")
-                        
+
                         this.Random.delete(key);
-                    }                
+                    }
                 })
 
                 //CLEAR THE ARRAY OF GAME MODS !!!!!!!!!
@@ -144,7 +144,7 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
         }catch(error){
             console.log("ERROR", this.clients.size);
             console.log("msg : ", error);
-            
+
             // client.disconnect();
         }
         console.log("end disconnect ...")
@@ -167,13 +167,13 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
                         console.log("p1::::: ", this.clients.get(id)[0].id, " p2::::: ", player2Id);
                         this.createNewGame(this.clients.get(id)[0].id, "ADVANCED", "", player2Id)
                     }
-                    
+
                     this.friend.delete(key);
                     console.log("FREIND MAP after delete:  ", this.friend);
-                    
+
                 }
             }
-                
+
         }
     }
 
@@ -195,12 +195,12 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
             console.log("RANDOM..... : ", userdto.id);
             if (!userdto)
                 console.log("RANDOM : userdto NOT VALID");
-        
+
             this.createRandomGame(client.id , req.map, req.mod);
         console.log("end RANDOM.....");
         }catch(error){
             console.log("ERROR IN RANDOM: ", error);
-            
+
         }
     }
 
@@ -227,16 +227,16 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
         // console.log("UPDATE ....");
         try{
             // console.log("cliend sending the request : ", req);
-            
+
             let userdto: UserDto = this.clients.get(client.id)[1]
             let game: GameService = this.Random.get(req.gameId);
           // console.log("req UPDATE: ", req, " ", userdto.id);
             if (!userdto)
                 {console.log("UPDATE : userdto NOT VALID");throw "invalid user"}
             // console.log("GAMEEEES:",game);
-            
-            // console.log("ID:-------------------------------- ", userdto.id, "|||ID2:  ", game.player2Id , "ID1:  ", game.player1Id);            
-            if (client.id === game.player1Id){ 
+
+            // console.log("ID:-------------------------------- ", userdto.id, "|||ID2:  ", game.player2Id , "ID1:  ", game.player1Id);
+            if (client.id === game.player1Id){
               let vec: Vector = {x: req.vec.x ,y:780}
               Body.setPosition(game.p1, vec);
             }
@@ -262,7 +262,7 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
     //GET USER FROM DATABASE
     private async getUser(client: Socket): Promise<UserDto> | null{
         let cookie : string = client.client.request.headers.cookie;
-        
+
         if (cookie){
             const user = this.jwtService.verify(cookie.substring(cookie.indexOf("=") + 1));
             if (user){
@@ -281,17 +281,17 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
         console.log(`state: ${state} p1: ${player1} p2: ${player2}`);
 
         const gameId = randomString(20);
-        
+
         this.Random.set(gameId, new GameService(this.prisma, this.clients.get(player1),player1, gameId, map, gameMods.DEFI));
 
         if (!state)
             this.clients.get(player1)[0].emit("CREATE", { gameId : "gameId", });
         else{
             console.log("CREATE NEW GAME:: ", player2);
-            
+
             this.Random.get(gameId).setPlayer2(this.clients.get(player2), player2);
             console.log("QUEUE::::::: ", this.randomBeg);
-            
+
             this.sendPlayDemand(player1, player2, gameId);
         }
     }
@@ -333,7 +333,7 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
     private clientInMap(dtoId: string): boolean{
         // this.clients.forEach((value, key)=>{
         // })
-        
+
         for (let [key, value] of this.clients) {
             if (value[1].id === dtoId)
                 return (console.log("TRUE  UUUUUUUUUUUUU"),true)
@@ -341,7 +341,7 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
         return (console.log("FALSE  UUUUUUUUUUUUU"),false);
     }
     private getSockId(dtoId: string): string{
-        
+
         for (let [key, value] of this.clients) {
             if (value[1].id === dtoId)
                 return (log("keeeeey: ", key),key)
