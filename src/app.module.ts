@@ -8,7 +8,6 @@ import { SearchModule } from './search/search.module';
 import { HomeModule } from './home/home.module';
 import { CloudinaryModule } from './cloudinary/cloudinary.module';
 import { LeaderboardModule } from "./modules/leaderboard/leaderboard.module";
-import { ChatGateway } from "./chat/chat.gateway";
 
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { GameGeteway } from "./game/game.gateway";

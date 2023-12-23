@@ -23,6 +23,7 @@ import { number } from "zod";
 import { log } from "console";
 import { EventPattern, Payload } from "@nestjs/microservices";
 import { MatchMaking } from "src/DTOs/User/matchMaking";
+import { OnEvent } from "@nestjs/event-emitter";
 
 
 
@@ -76,6 +77,11 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
                     this.clients.set(client.id, [client, userdto]);
                     // client.emit("connect", { "clientId" : userdto.id })
                     console.log("connected: ", client.connected);
+
+
+                    /**
+                     *  check if the client invite from the chat gateway
+                     */
                     
                     // console.log("client obj: ", this.clients.get(client.id));
                     await this.user.updateUserOnlineStatus(true, userdto.id);
@@ -206,10 +212,12 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
         }
     }
 
-    // @EventPattern('FRIEND')
-    // @SubscribeMessage("FRIEND")
-    handleGameEvent(@Payload() data: MatchMaking) {
-        console.log("data:: =====>", data);
+    @OnEvent('chat.INVITE')
+    handleChatMessage(payload: any) {
+        // handle the message
+        console.log("HHHH");
+        
+        console.log("HELLLLLLLLLLLLLLLLLLLLLLLLLLLLO--------------------------", payload);
     }
 
 

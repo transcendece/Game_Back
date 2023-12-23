@@ -11,22 +11,10 @@ import { ChatController } from './chat.controller';
 import { ChatGateway } from './chat.gateway';
 import { ChannelsService } from './chat.service';
 import { UserService } from 'src/auth/Services/user.service';
-import { ClientsModule, Transport } from '@nestjs/microservices';
 import { GameGeteway } from 'src/game/game.gateway';
 
 @Module({
-    imports :[
-        ClientsModule.register([
-            {
-              name: 'GameGeteway',
-              transport: Transport.TCP,
-              options: {
-                host: '127.0.0.1',
-                port: 8080, // replace with the actual port of the game gateway
-              },
-            },
-          ]),
-    ],
+    imports :[],
     providers: [UsersRepository, PrismaService, FriendsRepository, InvitesRepository, MatchesRepository, messageRepository, converationRepositroy, PrismaService, AchievementRepository, ChatGateway, InvitesRepository, UserService, ChannelsService ,GameGeteway],
     controllers: [ChatController],
 })

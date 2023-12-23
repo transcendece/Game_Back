@@ -14,6 +14,7 @@ import { AllExceptionsSocketFilter } from "./socket.exceptionHandler";
 import { Inject, UseFilters } from "@nestjs/common";
 import { MatchMaking } from "src/DTOs/User/matchMaking";
 import { ClientProxy } from "@nestjs/microservices";
+import { EventEmitter2 } from "@nestjs/event-emitter";
 
 @WebSocketGateway(8888, {
   cors: {
@@ -29,7 +30,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
       private conversation : converationRepositroy, 
       private message: messageRepository, 
       private channel : ChannelsService,
-      @Inject('GameGeteway') private gameGateway: ClientProxy,
+      private eventEmitter: EventEmitter2
       ) {
         this.clientsMap = new Map<string, Socket>();
     }
@@ -200,11 +201,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
               if (playerA && playerB) {
                 console.log("a & b t a: ", game.playerA, " b: ", game.playerB);
                 // console.log(this.gameGateway.isConnected());   
-                await this.gameGateway.send('ping', {}).toPromise();
                 console.log('Connected to GameGateway');
                 playerA.emit("EnterGame", "Ok")
                 playerB.emit("EnterGame", "Ok")
-                this.gameGateway.emit("FRIEND", game)
               }
               else {
                 console.log("a & b f a: ", playerA, " b: ", playerB);
@@ -293,4 +292,22 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
             console.log(error)
           }
         }
+
+
+
+
+        @SubscribeMessage('INVITE')
+        handleInvite(client: any, payload: {home: string, away: string}): void {
+          this.eventEmitter.emit('chat.INVITE', {game: 'hamza'});
+          //redirect to game
+        }   
+
+        @SubscribeMessage('CANCEL')
+        handleCANCEL(client: any, payload: {away: string}): void {
+          this.eventEmitter.emit('chat.CANCEL', {game: 'hamza'});
+        }   
+        @SubscribeMessage('ACCEPTE')
+        handleACCEPTE(client: any, payload: {away: string}): void {
+          this.eventEmitter.emit('chat.ACCEPTE', {game: 'hamza'});
+        }   
 }
