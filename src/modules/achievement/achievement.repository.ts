@@ -47,7 +47,7 @@ export class AchievementRepository {
             {
                 title : 'join your first channel', // chat
                 unlocked : false,
-                icon : 'https://res.cloudinary.com/dvmxfvju3/image/upload/v1699323498/kncbovhc1fbuqkilrgjm.png',
+                icon : 'https://res.cloudinary.com/dvmxfvju3/image/upload/v1699049653/qwt5g7xtl2aqybw77drz.png', // need to be changed
             },
             {
                 title : 'create your first channel', // chat

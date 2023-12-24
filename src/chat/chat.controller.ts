@@ -457,8 +457,12 @@ export class ChatController {
     async joinChannelRequest(@Req() req: Request & {user : UserDto}, @Body('channelName') channelName : string, @Body('password') password : string, @Res() res: Response) : Promise<any> {
         console.log("=======> ", channelName , password);
         let check : boolean = await this.channel.JoinUserToChannel(req.user.id, channelName, password)
-        if (check)
+        if (check) {
+            if (!req.user.achievements.includes("https://res.cloudinary.com/dvmxfvju3/image/upload/v1699049653/qwt5g7xtl2aqybw77drz.png")) {
+                this.user.updateAcheivement("https://res.cloudinary.com/dvmxfvju3/image/upload/v1699049653/qwt5g7xtl2aqybw77drz.png", req.user.id)
+            }
             res.status(200).json(channelName);
+        }
         else {
             res.status(400).json("can't join");
         }
