@@ -66,7 +66,11 @@ export class UsersRepository {
         }
     
     async getAllUsers() : Promise<UserDto[]> {
-            return await this.prisma.user.findMany();
+            return await this.prisma.user.findMany({
+                orderBy : {
+                    level : 'desc',
+                }
+            });
     }
 
     async updateUserOnlineStatus(status : boolean, userId : string) {

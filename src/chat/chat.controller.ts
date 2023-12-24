@@ -249,7 +249,7 @@ export class ChatController {
 
     @Post('invite')
     @UseGuards(JwtAuth)
-    async SendInvitation(@Body('username') username : string, @Req() req: Request & {user : UserDto}, @Res() res: Response) : Promise<any> {
+    async SendInvitation(@Body('username') username : string, @Req() req: Request & {user : UserDto}, @Res() res: Response) : Promise<any> { //check here ////////
         try {
             if (req.user.username == username) {
                 res.status(400).json("Sir tel3eb")
