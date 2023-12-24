@@ -11,6 +11,7 @@ import {
 } from 'matter-js';
 
 import { Socket } from "socket.io";
+import { MatchDto } from "src/DTOs/Match/match.dto";
 import { UserDto } from "src/DTOs/User/user.dto";
 
 import { gameMods } from "src/DTOs/game/game.dto";
@@ -97,7 +98,7 @@ export class GameService{
             isStatic: true,
             chamfer: { radius: 10},
         });
-        
+        //UPDATE THE POS OF GOUNDS
         this.grounds = [
             Bodies.rectangle(0, 0, 1200, 10, { isStatic: true , label: "TOP"}),
             Bodies.rectangle(0, 800, 1200, 10, { isStatic: true , label: "DOWN"}),
@@ -219,6 +220,17 @@ export class GameService{
                     (this.client2.emit("WinOrLose", {content: "lose"}), looserUser = this.user2Dto)
                     : (this.client1.emit("WinOrLose", {content: "lose"}), looserUser = this.user1Dto);
                 //STORE THE GAME RESULT IN DATABASE
+                if (!winnerUser.achievements.includes("https://res.cloudinary.com/dvmxfvju3/image/upload/v1699322378/qdat4wgumpjsvbtcisd6.png")){
+                    winnerUser.achievements.push("https://res.cloudinary.com/dvmxfvju3/image/upload/v1699322378/qdat4wgumpjsvbtcisd6.png")
+                    await this.prisma.user.update({
+                        where : {
+                            id : winnerUser.id,
+                        },
+                        data : {
+                            achievements : winnerUser.achievements,
+                        }
+                    })
+                }
                 await this.prisma.match.create({
                     data:{
                         playerAId: this.user1Dto.id,
@@ -248,7 +260,8 @@ export class GameService{
                         level : looserXp,
                     }
                 })
-                this.updateAchivements();
+                
+                await this.updateAchivements(winnerUser.id, looserUser.id);
             }
         })}
         catch (error) {
@@ -357,8 +370,119 @@ export class GameService{
         this.isRunning = false;
     }
 
-    private updateAchivements(){
+    private async updateAchivements(winnerId: string, looserId: string){
+        /**
+         * if (!req.user.achievements.includes("https://res.cloudinary.com/dvmxfvju3/image/upload/v1699049653/qwt5g7xtl2aqybw77drz.png")) {
+                this.user.updateAcheivement("https://res.cloudinary.com/dvmxfvju3/image/upload/v1699049653/qwt5g7xtl2aqybw77drz.png", req.user.id)
+         * 
+         */
+
+        const winner :UserDto = await this.prisma.user.findUnique({
+            where: {
+                id: winnerId,
+            }
+        })
+        const looser :UserDto = await this.prisma.user.findUnique({
+            where:{
+                id: looserId,
+            }
+        })
+        if (winner && looser) {
+            let WinnerMatches : MatchDto[] = await this.prisma.match.findMany({
+                where : {
+                    OR : [
+                        {
+                            playerAId : winnerId,
+                        },
+                        {
+                            playerBId : winnerId,
+                        }
+                    ]
+                }
+            })
+            let LooserMatches : MatchDto[] = await this.prisma.match.findMany({
+                where : {
+                    OR : [
+                        {
+                            playerAId : looserId,
+                        },
+                        {
+                            playerBId : looserId,
+                        }
+                    ]
+                }
+            })
             
+            if (WinnerMatches.length == 3) {
+                winner.achievements.push("https://res.cloudinary.com/dvmxfvju3/image/upload/v1699322411/fuentssbawcfsdbzgvzu.png")
+                await this.prisma.user.update({
+                    where : {
+                        id : winnerId,
+                    },
+                    data : {
+                        achievements : winner.achievements,
+                    }
+                })
+            }
+            if (WinnerMatches.length == 10) {
+                winner.achievements.push("https://res.cloudinary.com/dvmxfvju3/image/upload/v1699322764/ixv9svidceql0yox2ils.png")
+                await this.prisma.user.update({
+                    where : {
+                        id : winnerId,
+                    },
+                    data : {
+                        achievements : winner.achievements,
+                    }
+                })
+            }
+            if (WinnerMatches.length == 100) {
+                winner.achievements.push("https://res.cloudinary.com/dvmxfvju3/image/upload/v1699322889/mmgus4h0unnnj3lvhw2v.png")
+                await this.prisma.user.update({
+                    where : {
+                        id : winnerId,
+                    },
+                    data : {
+                        achievements : winner.achievements,
+                    }
+                })
+            }
+            if (LooserMatches.length == 3) {
+                looser.achievements.push("https://res.cloudinary.com/dvmxfvju3/image/upload/v1699322411/fuentssbawcfsdbzgvzu.png")
+                await this.prisma.user.update({
+                    where : {
+                        id : looserId,
+                    },
+                    data : {
+                        achievements : looser.achievements,
+                    }
+                })
+            }
+            if (LooserMatches.length == 10) {
+                looser.achievements.push("https://res.cloudinary.com/dvmxfvju3/image/upload/v1699322764/ixv9svidceql0yox2ils.png")
+                await this.prisma.user.update({
+                    where : {
+                        id : looserId,
+                    },
+                    data : {
+                        achievements : looser.achievements,
+                    }
+                })
+            }
+            if (LooserMatches.length == 100) {
+                looser.achievements.push("https://res.cloudinary.com/dvmxfvju3/image/upload/v1699322889/mmgus4h0unnnj3lvhw2v.png")
+                await this.prisma.user.update({
+                    where : {
+                        id : looserId,
+                    },
+                    data : {
+                        achievements : looser.achievements,
+                    }
+                })
+            }
+
+
+        }
+        
     }
 
 
