@@ -129,6 +129,8 @@ export class GameService{
 
 
 
+
+
     public async startGame(){
         console.log("START GAME ||||||||||||");
         // this.isRunning = true
@@ -246,6 +248,7 @@ export class GameService{
                         level : looserXp,
                     }
                 })
+                this.updateAchivements();
             }
         })}
         catch (error) {
@@ -253,6 +256,8 @@ export class GameService{
             
         }
 
+
+        
 
         Events.on(this.engine, "afterUpdate", ()=>{
             this.client1.emit('UPDATE', {
@@ -352,4 +357,9 @@ export class GameService{
         this.isRunning = false;
     }
 
+    private updateAchivements(){
+            
     }
+
+
+}
