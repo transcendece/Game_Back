@@ -38,8 +38,6 @@ export class messageRepository {
             date: 'asc',
           },
         })
-        console.log("before fetching : ", messages);
-        
         let _user : UserDto = await this.Primsa.user.findFirst({where : {id : requesterId}})
         let _sender : UserDto = await this.Primsa.user.findUnique({where : {id : _conversation.senderId}})
         let _reciever : UserDto = await this.Primsa.user.findUnique({where : {id : _conversation.recieverId}})
@@ -58,8 +56,6 @@ export class messageRepository {
                     conversationId : message.conversationId
                 } )
             })
-            console.log("fetched messages : ", data);
-            
             return data
         }
         else if (!_sender || !_reciever || !_user)

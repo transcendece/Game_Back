@@ -1,8 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { ConversationDto } from "src/DTOs/conversation/conversation.dto";
-import { messageDto } from "src/DTOs/message/message.dto";
 import { PrismaService } from "src/modules/database/prisma.service";
-import { PassThrough } from "stream";
 
 @Injectable()
 export class converationRepositroy {
@@ -42,13 +40,10 @@ export class converationRepositroy {
                 updatedAt: 'asc',
               },
             })
-        console.log("00000000000000000000000000000000 ===> ",counversations);    
         return counversations;
     }
 
     async findConversations(_recieverId : string, _senderId : string) : Promise<string> {
-        console.log("sender : ", _senderId, " reciever : ", _recieverId);
-        
         let tmp : ConversationDto[] = await this.Prisma.conversation.findMany({where : {
             OR : [
                 {   senderId : _senderId,
@@ -60,7 +55,6 @@ export class converationRepositroy {
                 }
             ]
         }})
-        console.log("dfjqdhfjqhdfjdqhfjhdqjfhdqhfjqhdfqjdfhqjd   ", tmp)
         if (tmp.length > 0)
             return tmp[0].id
         return ""

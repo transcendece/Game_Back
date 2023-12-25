@@ -92,7 +92,6 @@ export class ProfileController {
                 InGame : false,
             })
         }
-        console.log("friends : ", profileData.freinds);
         profileData.matches = tmpMatches.filter((match) => match !== null);
         res.status(200).json(profileData)
         }

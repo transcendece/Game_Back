@@ -18,6 +18,7 @@ import { EventEmitter2 } from "@nestjs/event-emitter";
 import { use } from "passport";
 import { email } from "valibot";
 import { ConversationDto } from "src/DTOs/conversation/conversation.dto";
+import { log } from "console";
 
 @WebSocketGateway(8888, {
   cors: {
@@ -169,6 +170,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
         try {
           
           // need to check if the user is already in game or not before sending the notification 
+          console.log("recieverd on Invite : ", recieverId);
+          
           let cookie : string = client.client.request.headers.cookie;
           if (cookie) {
             const jwt:string = cookie.substring(cookie.indexOf('=') + 1)
