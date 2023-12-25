@@ -17,6 +17,7 @@ import { ClientProxy } from "@nestjs/microservices";
 import { EventEmitter2 } from "@nestjs/event-emitter";
 import { use } from "passport";
 import { email } from "valibot";
+import { ConversationDto } from "src/DTOs/conversation/conversation.dto";
 
 @WebSocketGateway(8888, {
   cors: {
@@ -236,21 +237,53 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
         }
       }
 
+      @SubscribeMessage('newMessage')
+      async handleNewConversation(@MessageBody() message: messageDto, @ConnectedSocket() client : Socket) {
+        console.log("creating new conversation : ", message);
+        let cookie : string = client.client.request.headers.cookie;
+            if (cookie) {
+              const jwt:string = cookie.substring(cookie.indexOf('=') + 1)
+              let user;
+              user =  this.jwtService.verify(jwt)
+              if (user) {
+              let _user : UserDto = await this.user.getUserByUsername(message.recieverId)
+                if (!_user) {
+                  client.emit('ERROR', `No such Nick ${message.recieverId}`)
+                  return
+                }
+                message.recieverId = _user.id;
+                await this.hanldeMessage(message, client);
+                //const tmp = await this.conversation.createConversation(_user.id, user.sub)
+                //message.conversationId = tmp.id;
+                //message.senderId = user.sub;
+                //message.recieverId = _user.id;
+                //this.sendToSocket(message)
+              }
+            }
+      }
+
 
       @SubscribeMessage('SendMessage')
         async hanldeMessage(@MessageBody() message: messageDto, @ConnectedSocket() client : Socket) {
           try {
+            console.log("sendMessage data : ", message);
+            
             let cookie : string = client.client.request.headers.cookie;
             if (cookie) {
               const jwt:string = cookie.substring(cookie.indexOf('=') + 1)
               let user;
               user =  this.jwtService.verify(jwt);
               if (user) {
-                  const sender = await this.user.getUserById(user.sub);
+                  const sender = await this.user.getUserById(message.senderId);
                   const reciever = await this.user.getUserById(message.recieverId);
-                  if (!sender || !reciever || (sender.id == reciever.id)) {
+                  console.log("sender object : ", sender);
+                  console.log("reciever object : ", reciever);
+                  
+                  console.log("ggogogoogogogogoog : ", message.recieverId, "     ",  message.senderId);
+                  if (!sender || !reciever || (message.senderId == message.recieverId)) {
                     client.emit("ERROR", "YOU CAN't Text yourself Go buy a Note Book !")
-                    throw("invalid data : Wrong sender or reciever info.")
+                    console.log('here 11111');
+                    return ;
                   }
                   if (reciever.bandUsers.includes(sender.id)) {
                     throw("a banned user can't send messages .");
@@ -262,15 +295,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
                       console.log('added first message')
                   }
                 }
-                let conversations = await this.conversation.findConversations(reciever.id, sender.id);
-                if (!conversations) {
+                let conversations : string = await this.conversation.findConversations(reciever.id, sender.id);
+                console.log("conversations ----------> : ", conversations);
+                if (conversations.length > 0) {
+                  message.conversationId = conversations;
+                  await this.sendToSocket(message); 
+                }
+                else {
                   const tmp = await this.conversation.createConversation(reciever.id, sender.id)
                   message.conversationId = tmp.id;
                   await this.sendToSocket(message);
-                }
-                else {
-                  message.conversationId = conversations.id;
-                  await this.sendToSocket(message); 
                 }
               }
         }
@@ -293,6 +327,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
             await this.message.CreateMesasge(message);
             if (socket) {
               this.conversation.updateConversationDate(message.conversationId)
+              console.log("data -------------> : ", message);
+              
               let data : chatDto = new chatDto;
               data.content = message.content
               data.sender = message.senderId

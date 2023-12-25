@@ -17,6 +17,8 @@ import { JwtAuth } from "src/auth/Guards/jwt.guard";
 import { ConversationDto } from "src/DTOs/conversation/conversation.dto";
 import { UserSettingsDto } from "src/DTOs/settings/settings.user.dto";
 import{ channelData } from "src/DTOs/channel/channel.response.dto";
+import { send } from "process";
+import { read } from "fs";
 
 
 
@@ -40,16 +42,18 @@ export class ChatController {
                 if  (conversations) {
                     for (let index : number = 0; index < conversations.length; index++) {
                         let tmp : frontData = new frontData;
+                        console.log("Selected converstation is : ", conversations[index]);
+                        
                         let _sender : UserDto = await this.user.getUserById(conversations[index].senderId)
                         let _reciever : UserDto = await this.user.getUserById(conversations[index].recieverId)
                         if (_sender && _reciever && !_sender.bandUsers.includes(_reciever.id) && !_reciever.bandUsers.includes(_sender.id)) {
                             tmp.Conversationid = conversations[index].id;
-                            tmp.recieverId = (_user.id == _sender.id) ? _reciever.id : _sender.id;
-                            tmp.reciever = (_user.id == _sender.id) ? _reciever.username : _sender.username;
-                            tmp.senderId = (_user.id == _reciever.id) ? _reciever.id : _sender.id;
-                            tmp.sender = (_user.id == _reciever.id) ? _reciever.username : _sender.username;
-                            tmp.avatar = (_user.username == _sender.username) ? _reciever.avatar : _sender.avatar;
-                            tmp.username = (_user.username == _sender.username) ? _reciever.username : _sender.username;
+                            tmp.recieverId = (req.user.id == _sender.id) ? _reciever.id : _sender.id;
+                            tmp.reciever = (req.user.id == _sender.id) ? _reciever.username : _sender.username;
+                            tmp.senderId = (req.user.id == _sender.id) ? _sender.id : _reciever.id;
+                            tmp.sender = (req.user.id == _sender.id) ? _sender.username : _reciever.username;
+                            tmp.avatar = (req.user.username == _sender.username) ? _reciever.avatar : _sender.avatar;
+                            tmp.username = (req.user.username == _sender.username) ? _reciever.username : _sender.username;
                             tmp.online = false;
                             tmp.id = 0;
                             tmp.updatedAt = conversations[index].updatedAt;
@@ -76,6 +80,7 @@ export class ChatController {
                 data.forEach((_data) => {
                     _data.id = index++;
                 })
+                console.log("hello this is the data , " , data);
                 res.status(200).json(data)
                 return
             }

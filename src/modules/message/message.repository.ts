@@ -12,6 +12,7 @@ export class messageRepository {
 
 
     async CreateMesasge(message : messageDto) : Promise<messageDto> {
+        try {
         this.Primsa.conversation.update({where : {id : message.conversationId},
             data : {
                 updatedAt : new Date
@@ -24,6 +25,9 @@ export class messageRepository {
             content : message.content,
             date : new Date()
         }})
+        } catch (error) {
+            console.log("exception ::::::");
+        }
     }
 
     async getMessages(_conversation : ConversationDto, requesterId : string) : Promise<any> {
@@ -34,6 +38,8 @@ export class messageRepository {
             date: 'asc',
           },
         })
+        console.log("before fetching : ", messages);
+        
         let _user : UserDto = await this.Primsa.user.findFirst({where : {id : requesterId}})
         let _sender : UserDto = await this.Primsa.user.findUnique({where : {id : _conversation.senderId}})
         let _reciever : UserDto = await this.Primsa.user.findUnique({where : {id : _conversation.recieverId}})
@@ -41,7 +47,7 @@ export class messageRepository {
             let data : chatDto[] = []
             messages.forEach((message) => {
                 data.push( {
-                    isOwner : message.senderId == _user.id,
+                    isOwner : (message.senderId == _user.id),
                     content : message.content,
                     avatar : (_sender.id == message.senderId) ?  _sender.avatar : _reciever.avatar,
                     sender : (_sender.id == message.senderId) ?  _sender.username : _reciever.username,
@@ -52,6 +58,8 @@ export class messageRepository {
                     conversationId : message.conversationId
                 } )
             })
+            console.log("fetched messages : ", data);
+            
             return data
         }
         else if (!_sender || !_reciever || !_user)
