@@ -302,12 +302,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
                 console.log("conversations ----------> : ", conversations);
                 if (conversations.length > 0) {
                   message.conversationId = conversations;
-                  await this.sendToSocket(message); 
+                  await this.sendToSocket(message, sender.username); 
                 }
                 else {
                   const tmp = await this.conversation.createConversation(reciever.id, sender.id)
                   message.conversationId = tmp.id;
-                  await this.sendToSocket(message);
+                  await this.sendToSocket(message, sender.username);
                 }
               }
         }
@@ -320,7 +320,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
         }
       }
       
-      async sendToSocket(message: messageDto) {
+      async sendToSocket(message: messageDto, Sender : string) {
         try {
           console.log('message in send socket : ',message)
           let _reciever : UserDto = await this.user.getUserById(message.recieverId)
@@ -334,7 +334,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
               
               let data : chatDto = new chatDto;
               data.content = message.content
-              data.sender = message.senderId
+              data.sender = Sender
+              data.senderId = message.senderId
               data.avatar = _reciever.avatar
               data.isOwner = false
               data.conversationId = message.conversationId 
