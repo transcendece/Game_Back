@@ -42,8 +42,6 @@ export class ChatController {
                 if  (conversations) {
                     for (let index : number = 0; index < conversations.length; index++) {
                         let tmp : frontData = new frontData;
-                        console.log("Selected converstation is : ", conversations[index]);
-                        
                         let _sender : UserDto = await this.user.getUserById(conversations[index].senderId)
                         let _reciever : UserDto = await this.user.getUserById(conversations[index].recieverId)
                         if (_sender && _reciever && !_sender.bandUsers.includes(_reciever.id) && !_reciever.bandUsers.includes(_sender.id)) {
@@ -80,7 +78,6 @@ export class ChatController {
                 data.forEach((_data) => {
                     _data.id = index++;
                 })
-                console.log("hello this is the data , " , data);
                 res.status(200).json(data)
                 return
             }
