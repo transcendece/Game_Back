@@ -25,6 +25,7 @@ import { EventPattern, Payload } from "@nestjs/microservices";
 import { MatchMaking } from "src/DTOs/User/matchMaking";
 import { OnEvent } from "@nestjs/event-emitter";
 import { from } from "rxjs";
+import { CLIENT_RENEG_WINDOW } from "tls";
 
 
 
@@ -122,6 +123,10 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
             console.log("                   userDto: ", userdto.id ," ", userdto.username);
 
             if (userdto){
+                //CLEAR THE ARRAY OF GAME MODS !!!!!!!!!
+                this.deleteUserFromArrays(client.id);
+
+                //clear the element in Random Map
                 this.Random.forEach((value, key) => {
                     if (value.ifPlayerInGame(client.id)){
                         console.log("FIND THE GAME");
@@ -135,7 +140,8 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
                     }
                 })
 
-                //CLEAR THE ARRAY OF GAME MODS !!!!!!!!!
+
+
                 this.clients.delete(client.id);
                 console.log("connected: ", client.connected);
                 await this.user.updateUserOnlineStatus(false, userdto.id);
@@ -157,11 +163,11 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
         for (let [key, value] of this.friend){
             if (userId === value[0][0] || userId === value[1][0]){
                 if (value[0][1] === false && value[1][1] === false){
-                    this.clients.get(id)[0].emit("WAIT");
+                    this.clients.get(id)[0].emit("WAIT", {map: "ADVANCED"});
                     userId === value[0][0] ? value[0][1] = true : value[1][1] = true
                 }
                 else{
-                    this.clients.get(id)[0].emit("WAIT");
+                    this.clients.get(id)[0].emit("WAIT", {map: "ADVANCED"});
                     let player2Id = this.getSockId(value[0][1] === false ? value[1][0]: value[0][0])
                     if (player2Id.length != 0){
                         console.log("p1::::: ", this.clients.get(id)[0].id, " p2::::: ", player2Id);
@@ -191,7 +197,7 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
         try{
 
             let userdto: UserDto = this.clients.get(client.id)[1]
-            this.clients.get(client.id)[0].emit("WAIT")
+            this.clients.get(client.id)[0].emit("WAIT", {map: req.map})
             console.log("RANDOM..... : ", userdto.id);
             if (!userdto)
                 console.log("RANDOM : userdto NOT VALID");
@@ -247,6 +253,21 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
         }catch(err){
             console.log(err);
         }
+    }
+
+    @SubscribeMessage("EXITGAME")
+    async exitGame(@MessageBody() req: {gameId: string}, @ConnectedSocket() client : Socket){
+        if (this.Random.has(req.gameId)){
+            this.Random.get(req.gameId).stop;
+            this.Random.get(req.gameId).client1.emit("GAMEOVER")
+            this.Random.get(req.gameId).client2.emit("GAMEOVER")
+            this.Random.delete(req.gameId);
+        }
+    }
+
+    @SubscribeMessage("EXITWAIT")
+    async exitWait(@ConnectedSocket() client : Socket){
+        this.deleteUserFromArrays(client.id);
     }
 
     @OnEvent('chat.INVITE')
@@ -307,9 +328,11 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
         if (map === "BEGINNER")this.randomBeg.push(player)
         else if (map === "INTEMIDIER")this.randomInt.push(player)
         else if (map === "ADVANCED")this.randomAdv.push(player)
+
         console.log("RANDOMBeg:  ", this.randomBeg);
         console.log("RANDOMInt:  ", this.randomInt);
         console.log("RANDOMAdv:  ", this.randomAdv);
+    
         let player1: string;
         let player2: string;
         if (map === "BEGINNER" && this.randomBeg.length >= 2) {
@@ -347,6 +370,20 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
                 return (log("keeeeey: ", key),key)
         }
         return ('');
+    }
+
+
+    private deleteUserFromArrays(id: string){
+        // this.randomBeg.filter(item => item !== id);
+        
+        
+        let index : number = -1;
+        if ((index = this.randomBeg.indexOf(id)) !== -1)
+            this.randomBeg.splice(index, 1)
+        if ((index = this.randomInt.indexOf(id)) !== -1)
+            this.randomInt.splice(index, 1)
+        if ((index = this.randomAdv.indexOf(id)) !== -1)
+            this.randomAdv.splice(index, 1)
     }
 
     // private printMap(s: string){
