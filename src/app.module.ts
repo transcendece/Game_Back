@@ -12,6 +12,8 @@ import { LeaderboardModule } from "./modules/leaderboard/leaderboard.module";
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { GameGeteway } from "./game/game.gateway";
 import { UsersRepository } from "./modules/users/users.repository";
+import { SideBarGateway } from "./modules/sidebar/sidebar.gatway";
+import { SideBarModule } from "./modules/sidebar/sidebar.module";
 
 
 @Module({
@@ -25,6 +27,7 @@ import { UsersRepository } from "./modules/users/users.repository";
     CloudinaryModule, 
     LeaderboardModule, 
     SearchModule,
+    SideBarModule,
     EventEmitterModule.forRoot(),
   ],
   controllers: [],

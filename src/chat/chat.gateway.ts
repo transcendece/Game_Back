@@ -65,7 +65,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
                   }
                   else {
                     this.clientsMap.set(test.id, client);
-                    await this.user.updateUserOnlineStatus(true, user.sub)
+                    // await this.user.updateUserOnlineStatus(true, user.sub)
                   }
                 }
               }
@@ -95,7 +95,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
               const test = await this.user.getUserById(user.sub)
               if (test) {
                 console.log(test.id);
-                await this.user.updateUserOnlineStatus(false, test.id)
+                // await this.user.updateUserOnlineStatus(false, test.id)
                 console.log(`this is a test : ${test.id} ****`)
               }
               console.log("disconnected : ", user.sub);
