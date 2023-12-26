@@ -37,6 +37,12 @@ export class ChatController {
         try {
             let _user : UserDto = await this.user.getUserById(req.user.id)
             let data : frontData[] = [];
+
+            if (_user.IsEnabled && !_user.isAuth) {
+
+                res.status(401).json('Unauthorized');
+                return ;
+            }
             if (_user) {
                 let conversations : ConversationDto[] = await this.conversation.getConversations(_user.id)
                 if  (conversations) {
