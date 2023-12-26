@@ -211,7 +211,7 @@ export class ChannelsService {
   async JoinUserToChannel(userId : string, channel : string, password : string) : Promise<boolean> {
     let StoredChannel : channelDto = await this.prisma.channel.findFirst({
       where : {
-        name : channel,      
+        name : channel,
       }
     })
     if (!StoredChannel) {
@@ -228,9 +228,11 @@ export class ChannelsService {
       }
     })
     if (CheckIfUserExitst) {
+      console.log("user already exists ....");
       return false
     }
     if (StoredChannel.IsProtected) {
+      console.log("password , ", password, " stored pass , ", StoredChannel.password);
       let valid : boolean = await this.checkPassword(password, StoredChannel.password)
       console.log("pass valid : ", valid);
       if (valid) {
@@ -254,10 +256,12 @@ export class ChannelsService {
           }
         })
         if (!tmp) {
+          console.log("user not created ");
           return false;
         }
       }
       else {
+        console.log("wrong pass ");
         return false;
       }
     }
@@ -843,7 +847,8 @@ async  KickUserFromChannel(UserToKick: string, channelName: string, requester : 
     let channel : channelDto = await this.prisma.channel.findFirst({where : { name :channelName}})
     if (channel && password.length) {
       let _tmp : string[] = ['','']
-      _tmp  = await this.hashPassword(channel.password)
+      _tmp  = await this.hashPassword(password)
+      console.log(_tmp);
       return await this.prisma.channel.update({where : {id: channel.id},
       data : {
         IsProtected : true,

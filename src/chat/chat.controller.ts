@@ -529,11 +529,13 @@ export class ChatController {
     }
     @UseGuards(JwtAuth)
     @Post('addPasswordToChannel')
-    async addPasswordToChannel(@Body() channleData : channelDto, @Req() req: Request & {user : UserDto}, @Res() res: Response) {
+    async addPasswordToChannel(@Body() channelData : channelDto, @Req() req: Request & {user : UserDto}, @Res() res: Response) {
         try {
-            let channel : channelDto = await this.channel.getChannelByName(channleData.name)
+            let channel : channelDto = await this.channel.getChannelByName(channelData.name)
             if (channel && channel.owner == req.user.id) {
-                await this.channel.setPasswordToChannel(channleData.password, channleData.name)
+                console.log("password to channel : ", channelData.password);
+                
+                await this.channel.setPasswordToChannel(channelData.password, channelData.name)
             }
             res.status(200).json("added Pass")
         }

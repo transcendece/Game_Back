@@ -35,7 +35,6 @@ export class settingsController {
     async updateUserAvatar(@Res() res: Response, @Body('url') url : string, @Req() req: Request & {user : UserDto}) {
         try {
             console.log("url : ", url);
-            
             if (url.length == 0) {
                 res.status(400).json("invalid url .....");
                 return;
