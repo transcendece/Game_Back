@@ -197,12 +197,21 @@ export class ChatController {
                         if (friends[index].inviteRecieverId == req.user.id && !data.bandUsers.includes(friends[index].inviteSenderId)) {
                             tmp  = await this.user.getUserById(friends[index].inviteSenderId)
                             if (tmp)
-                                data.friends.push(tmp.username);
+                                data.friends.push({
+                                   name : tmp.username,
+                                   inGame : tmp.inGame,
+                                   online : tmp.online
+                                });
                         }
                         else if (friends[index].inviteSenderId == req.user.id && !data.bandUsers.includes(friends[index].inviteRecieverId)) {
                             tmp = await this.user.getUserById(friends[index].inviteRecieverId)
-                            if (tmp)
-                                data.friends.push(tmp.username);
+                            if (tmp) {
+                                data.friends.push({
+                                    name : tmp.username,
+                                    inGame : tmp.inGame,
+                                    online : tmp.online
+                                });
+                            }
                         }
                     }
                 }

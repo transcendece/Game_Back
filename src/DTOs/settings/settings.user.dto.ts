@@ -1,5 +1,11 @@
-export class UserSettingsDto {
 
+export class friends {
+    name : string;
+    online : boolean;
+    inGame : boolean;
+}
+
+export class UserSettingsDto {
     constructor () {
         this.user = "";
         this.bandUsers = [];
@@ -8,6 +14,6 @@ export class UserSettingsDto {
     }
     user        : string;
     invitations : string[];
-    friends     : string[];
+    friends     : friends[];
     bandUsers   : string[];
 }

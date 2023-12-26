@@ -25,8 +25,6 @@ export class FriendsRepository {
         let tmp;
         if (!check)
             tmp = this.prisma.friend.create({data});
-        else
-            tmp = undefined
         let user : string[] = (await this.prisma.user.findFirst({where : {id : _id}})).achievements
         if (friends.length > 0)
             if (!user.includes('https://res.cloudinary.com/dvmxfvju3/image/upload/v1699323498/kncbovhc1fbuqkilrgjm.png')) // add ur first friend

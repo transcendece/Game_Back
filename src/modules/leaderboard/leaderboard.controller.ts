@@ -1,7 +1,9 @@
 import { Body, Controller, Get, Param, Req, UseGuards } from "@nestjs/common";
+import { log } from "console";
 import { Request } from "express";
 import { use } from "passport";
 import { async } from "rxjs";
+import { MatchDto } from "src/DTOs/Match/match.dto";
 import { UserDto } from "src/DTOs/User/user.dto";
 import { UserData } from "src/DTOs/User/user.profileData";
 import { AchievementDto } from "src/DTOs/achievement/achievement.dto";
@@ -36,13 +38,20 @@ export class LeaderboardController {
                             console.log("7777777777 ==> ", achievement);
                         })
                     })
-                    users.forEach( (user)=> {leaderboard.push({
-                        username: user.username,
-                        avatar: user.avatar,
-                        achievements : user.achievements,
-                        rank : 0,
-                        level : user.level
-                    })})
+                    // console.log("number : ", num);
+                    
+                    for (let index : number = 0; index < users.length; index++ ) {
+                        let num : number = await this.user.getMatches(users[index].id);
+                            leaderboard.push({
+                            username: users[index].username,
+                            avatar: users[index].avatar,
+                            achievements : users[index].achievements,
+                            rank : 0,
+                            level : users[index].level,
+                            GamesPlayed : num,
+                        })
+                    }
+                    console.log("data ", leaderboard);
                     return (leaderboard)
                 }
        

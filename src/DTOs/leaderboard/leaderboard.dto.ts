@@ -12,4 +12,5 @@ export class LeaderboardDto {
     
     achievements : string[];
 
+    GamesPlayed : number;
 }

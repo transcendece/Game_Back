@@ -2,10 +2,29 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from 'src/modules/database/prisma.service';
 import { UserDto } from 'src/DTOs/User/user.dto';
 import { title } from 'process';
+import { MatchDto } from 'src/DTOs/Match/match.dto';
 
 @Injectable()
 export class UsersRepository {
     constructor (private prisma: PrismaService) {}
+
+
+    async getMatches(id : string) : Promise<number> {
+        let games : MatchDto[] = []
+        games = await this.prisma.match.findMany({
+            where : {
+                OR : [
+                    {
+                        playerAId : id,
+                    },
+                    {
+                        playerBId : id,
+                    }
+                ]
+            }
+        })
+        return games.length
+    }
 
     async createUser (params : {data : UserDto}) : Promise<UserDto> {
         const { data } = params;
