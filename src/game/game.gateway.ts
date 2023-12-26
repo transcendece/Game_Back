@@ -121,30 +121,41 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
             // else  client.emit("REDIRECT", { "url" : '/profile'});
             //REDIRECT TO PROFILE
             console.log("                   userDto: ", userdto.id ," ", userdto.username);
-
+            
             if (userdto){
                 //CLEAR THE ARRAY OF GAME MODS !!!!!!!!!
                 this.deleteUserFromArrays(client.id);
 
                 //clear the element in Random Map
-                this.Random.forEach((value, key) => {
+                this.Random.forEach(async (value, key) => {
                     if (value.ifPlayerInGame(client.id)){
                         console.log("FIND THE GAME");
-
+                        
                         value.stop();
                         //
                         value.client1.emit("GAMEOVER")
                         value.client2.emit("GAMEOVER")
-
                         this.Random.delete(key);
+                        await this.prisma.user.update({
+                            where : {
+                                id : value.user1Dto.id,
+                            },
+                            data : {
+                                inGame : false,
+                            }
+                        })
+                        await this.prisma.user.update({
+                            where : {
+                                id : value.user2Dto.id,
+                            },
+                            data : {
+                                inGame : false,
+                            }
+                        })
                     }
                 })
-
-
-
                 this.clients.delete(client.id);
                 console.log("connected: ", client.connected);
-                await this.user.updateUserOnlineStatus(false, userdto.id);
             }
             // client.disconnect();
         }catch(error){

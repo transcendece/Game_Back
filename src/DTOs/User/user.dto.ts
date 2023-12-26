@@ -25,6 +25,8 @@ export class UserDto {
     bandBy    ? : string[];
 
     online  :    boolean;
+    
+    inGame  :    boolean;
 
     level : number;
 

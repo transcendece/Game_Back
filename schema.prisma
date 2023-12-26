@@ -8,7 +8,6 @@ generator client {
 datasource database {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  // directUrl = env("DIRECT_URL")
 }
 
 model User {
@@ -30,6 +29,7 @@ model User {
   bandUsers             String[]
   bandBy                String[]
   online                Boolean ? @default(false)
+  inGame                Boolean ? @default(false)
   level                 Float @default(0)
   channels              ChannelOnUser[]
   channelMessages       ChannelMessage[]

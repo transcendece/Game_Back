@@ -135,6 +135,22 @@ export class GameService{
     public async startGame(){
         console.log("START GAME ||||||||||||");
         // this.isRunning = true
+        await this.prisma.user.update({
+            where :{
+                id : this.user1Dto.id,
+            },
+            data : {
+                inGame : true,
+            }
+        })
+        await this.prisma.user.update({
+            where :{
+                id : this.user2Dto.id,
+            },
+            data : {
+                inGame : true,
+            }
+        })
         this.client1.emit("START", {
             "ID"    :1,
             "ball"  : this.ball.position,
@@ -249,7 +265,8 @@ export class GameService{
                         id : winnerUser.id,
                     },
                     data :{
-                        level : winnerXp
+                        level : winnerXp,
+                        inGame : false,
                     }
                 })
                 await this.prisma.user.update({
@@ -258,6 +275,7 @@ export class GameService{
                     },
                     data :{
                         level : looserXp,
+                        inGame : false,
                     }
                 })
                 
