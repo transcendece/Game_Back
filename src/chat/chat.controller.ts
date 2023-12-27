@@ -627,6 +627,10 @@ export class ChatController {
     @UseGuards(JwtAuth)
     async getUserMessages(@Req() req: Request & {user : UserDto}, @Res() res: Response) :Promise<any> {
         try {
+            if (!req.user.isAuth && req.user.IsEnabled) {
+                res.status(401).json("unAuthorized");
+                return ;
+            }
             let _user : UserDto = await this.user.getUserById(req.user.id)
             let data : frontData[] = [];
             if (_user) {
