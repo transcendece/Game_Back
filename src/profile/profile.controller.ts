@@ -288,6 +288,10 @@ export class ProfileController {
     @UseGuards(JwtAuth)
     async AnassTest(@Req() req: Request & {user : UserDto}, @Res() res: Response, @Param('id') id : string) : Promise<any> {
         try {
+            if (!req.user.isAuth && req.user.IsEnabled) {
+                res.status(401).json("unAuthorized");
+                return ;
+            }
             const _achievements : AchievementDto[] = await this.achievement.getAchievements();
             if (!_achievements.length)
                 await this.achievement.CreateAchievment(this.file);

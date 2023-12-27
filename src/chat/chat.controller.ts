@@ -685,7 +685,12 @@ export class ChatController {
     @UseGuards(JwtAuth)
     async getChannels(@Req() req: Request & {user : UserDto}, @Res() res: Response) : Promise<any> {
         try {
-            // console.log("Sending data to : ", req.user.username);
+            let _user : UserDto = await this.user.getUserById(req.user.id)
+
+            if (_user && _user.IsEnabled && !_user.isAuth) {
+                res.status(401).json('Unauthorized');
+                return ;
+            }
             let channelData : channelData[] = [];
             let data = await this.channel.getUserChannelNames(req.user.id);
             if (data){
@@ -753,7 +758,11 @@ export class ChatController {
     @UseGuards(JwtAuth)
     async   channelSettings(@Req() req: Request & {user : UserDto}, @Res() res: Response) : Promise<any> {
         try {
-
+            let _user : UserDto = await this.user.getUserById(req.user.id)
+            if (_user && _user.IsEnabled && !_user.isAuth) {
+                res.status(401).json('Unauthorized');
+                return ;
+            }
             let data = await this.channel.getChannelSettingsData(req.user.id);
             console.log("final data : ", data);
             res.status(200).json(data)
@@ -767,6 +776,11 @@ export class ChatController {
     @UseGuards(JwtAuth)
     async getUserDataForSettings(@Req() req: Request & {user: UserDto}, @Res() res: Response) : Promise<any> {
         try {
+            let _user : UserDto = await this.user.getUserById(req.user.id)
+            if (_user && _user.IsEnabled && !_user.isAuth) {
+                res.status(401).json('Unauthorized');
+                return ;
+            }
             let data : UserSettingsDto = new UserSettingsDto() ;
             let userData : UserDto = await this.user.getUserById(req.user.id)
             let invitations : InviteDto[] = await this.invite.getUserInviations(req.user.id)
