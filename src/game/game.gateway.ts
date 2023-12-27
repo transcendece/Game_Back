@@ -120,8 +120,6 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
             if (this.clients.has(client.id)) userdto = this.clients.get(client.id)[1]
             // else  client.emit("REDIRECT", { "url" : '/profile'});
             //REDIRECT TO PROFILE
-            console.log("                   userDto: ", userdto.id ," ", userdto.username);
-            
             if (userdto){
                 //CLEAR THE ARRAY OF GAME MODS !!!!!!!!!
                 this.deleteUserFromArrays(client.id);
