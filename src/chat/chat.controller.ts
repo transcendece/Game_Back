@@ -790,6 +790,7 @@ export class ChatController {
                             tmp  = await this.user.getUserById(friends[index].inviteSenderId)
                             if (tmp)
                                 data.friends.push({
+                                    id : tmp.id,
                                    name : tmp.username,
                                    inGame : tmp.inGame,
                                    online : tmp.online
@@ -799,6 +800,7 @@ export class ChatController {
                             tmp = await this.user.getUserById(friends[index].inviteRecieverId)
                             if (tmp) {
                                 data.friends.push({
+                                    id : tmp.id,
                                     name : tmp.username,
                                     inGame : tmp.inGame,
                                     online : tmp.online
@@ -817,7 +819,7 @@ export class ChatController {
                 }
                 data.bandUsers = banUsernames;
                 data.user = req.user.id;
-                res.status(200).json({data})
+                res.status(200).json(data)
             }
             else {
                 res.status(400).json({message : "User dosen't exist in database ..."})
@@ -916,6 +918,10 @@ export class ChatController {
     @UseGuards(JwtAuth)
     async   BanUser(@Req() req: Request & {user : UserDto} , @Body('username') username: string, @Res() res: Response) : Promise<any> {
         try {
+            if (username === req.user.username) {
+                res.status(400).json("can't ban yourself")
+                return
+            }
             let userToBan : UserDto = await this.user.getUserByUsername(username)
             let requester : UserDto = await this.user.getUserById(req.user.id)
             if (userToBan && requester && !requester.bandUsers.includes(userToBan.id)) {
@@ -1090,7 +1096,7 @@ export class ChatController {
             console.log("invite ====> ", username);
             await this.invite.deleteInvite(tmp.id);
             let data : FriendDto = await this.friend.createFriend(new FriendDto(invitationRecieverId, invitationSenderId, ''), req.user.id)
-            res.status(200).json({username : username, action : "addFriend"});
+            res.status(200).json({username : username, action : "addFriend", id : tmpUser.id});
         }
         catch (error) {
             res.status(400).json("no Invite to accepte")

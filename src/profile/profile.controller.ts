@@ -194,6 +194,7 @@ import { FriendDto } from 'src/DTOs/friends/friend.dto';
 import { JwtAuth } from 'src/auth/Guards/jwt.guard';
 import { AchievementRepository } from 'src/modules/achievement/achievement.repository';
 import { FriendsRepository } from 'src/modules/friends/friends.repository';
+import { InvitesRepository } from 'src/modules/invites/invites.repository';
 import { MatchesRepository } from 'src/modules/matches/matches.repository';
 import { FileService } from 'src/modules/readfile/readfile';
 import { UsersRepository } from 'src/modules/users/users.repository';
@@ -205,7 +206,8 @@ export class ProfileController {
                 private achievement: AchievementRepository,
                 private match: MatchesRepository,
                 private file : FileService,
-                private friend: FriendsRepository){}
+                private friend: FriendsRepository,
+                private invite : InvitesRepository){}
 
     @Get()
     @UseGuards(JwtAuth)
@@ -345,8 +347,11 @@ export class ProfileController {
                 console.log(_achievements)
                 let isBand : boolean = (req.user.bandUsers.includes(id) || req.user.bandBy.includes(id))
                 let isFreind : boolean = await this.friend.isFriend(req.user.id, id);
+                let inviteSent  : boolean = await this.invite.hasInvite(req.user.id, id)
                 profileData.isBlocked = isBand
                 profileData.isFriend = isFreind
+                if (inviteSent)
+                    profileData.isFriend = true;
                 if (isBand) {
                     res.status(401).json("UnAuthorized ....")
                     return ;
