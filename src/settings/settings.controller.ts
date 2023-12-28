@@ -63,7 +63,7 @@ export class settingsController {
             console.log("trying to change data : ",data);
             const user = req.user
             let tmp : UserDto = await this.user.getUserByUsername(data.username)
-            if (tmp) {
+            if (tmp && req.user.username != data.username) {
                 res.status(400).json("username already used")
                 return
             }
