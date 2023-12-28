@@ -680,7 +680,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
           let _reciever : UserDto = await this.user.getUserById(message.recieverId)
           let _sender : UserDto = await this.user.getUserByUsername(Sender)
           console.log("reciever is : ", _reciever);
-          if (_reciever && _sender) {
+          if (_reciever && _sender && !_reciever.bandBy.includes(_sender.id) && !_reciever.bandUsers.includes(_sender.id)) {
             const socket: Socket = this.clientsMap.get(_reciever.id);
             await this.message.CreateMesasge(message);
             if (socket) {
