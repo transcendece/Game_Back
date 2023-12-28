@@ -183,6 +183,7 @@
 // }
 
 import { Body, Controller, Get, Param, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { matches } from 'class-validator';
 import { Request, Response } from 'express';
 import { MatchDto } from 'src/DTOs/Match/match.dto';
 import { matchModel } from 'src/DTOs/Match/match.model';
@@ -220,7 +221,9 @@ export class ProfileController {
         const _achievements : AchievementDto[] = await this.achievement.getAchievements();
         if (!_achievements.length)
             await this.achievement.CreateAchievment(this.file);
-        const _matches: MatchDto[] =  await this.match.findMatchesByUserId(req.user.id)
+        const _matches =  await this.match.findMatchesByUserId(req.user.id)
+        // console.log(_matches[0].playerA.username);
+        
         let tmpUser : UserDto  = await this.user.getUserById(req.user.id)
         if (!tmpUser)
             throw ('no such user.')
@@ -279,6 +282,12 @@ export class ProfileController {
             })
         }
         profileData.matches = tmpMatches.filter((match) => match !== null);
+        let allUsers : UserDto[] = await this.user.getAllUsers();
+        for (let index : number = 0 ; index < allUsers.length; index++) {
+            if (allUsers[index].id === req.user.id) {
+                profileData.userData.rank = index + 1;
+            }
+        }
         res.status(200).json(profileData)
         }
         catch(error) {
@@ -298,6 +307,9 @@ export class ProfileController {
             if (!_achievements.length)
                 await this.achievement.CreateAchievment(this.file);
             const _matches: MatchDto[] =  await this.match.findMatchesByUserId(id)
+            // console.log("matches : ", matches);
+            // console.log("matches : ", matches);
+            
             let tmpUser : UserDto  = await this.user.getUserById(id)
             if (!tmpUser)
                 throw ('no such user.')
@@ -347,13 +359,19 @@ export class ProfileController {
                     return tmp;
             }))
                 profileData.matches = tmpMatches.filter((match) => match !== null);
-                console.log(profileData.matches);
-                console.log(_achievements)
+                console.log("matches : ", profileData.matches);
+                console.log("achievs : ", _achievements)
                 let isBand : boolean = (req.user.bandUsers.includes(id) || req.user.bandBy.includes(id))
                 let isFreind : boolean = await this.friend.isFriend(req.user.id, id);
                 let inviteSent  : boolean = await this.invite.hasInvite(req.user.id, id)
                 profileData.isBlocked = isBand
                 profileData.isFriend = isFreind
+                let allUsers : UserDto[] = await this.user.getAllUsers();
+                for (let index : number = 0 ; index < allUsers.length; index++) {
+                    if (allUsers[index].id === id) {
+                        profileData.userData.rank = index + 1;
+                    }
+                }
                 if (inviteSent)
                     profileData.isFriend = true;
                 if (isBand) {
