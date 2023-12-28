@@ -831,7 +831,7 @@ export class ChatController {
                 }
                 data.bandUsers = banUsernames;
                 data.user = req.user.id;
-                res.status(200).json({data})
+                res.status(200).json(data)
             }
             else {
                 res.status(400).json({message : "User dosen't exist in database ..."})
