@@ -111,20 +111,20 @@ export class GameService{
         if (this.map === "ADVANCED")
         {
             this.obstacles = AdvancedObs;
-            this.maxVelocity = 10; //change
+            this.maxVelocity = 15;
             this.maxScore = 7;
             
         }
         else if (this.map === "INTEMIDIER"){
             this.obstacles = IntemidierObs
-            this.maxVelocity = 15
+            this.maxVelocity = 12
             this.maxScore = 5;
         }
         else if (this.map === "BEGINNER"){
-            this.maxVelocity = 10
+            this.maxVelocity = 6
             this.maxScore = 3;
        }
-       console.log("MAXSXORE: ", this.maxScore);
+    //    console.log("MAXSXORE: ", this.maxScore);
        this.gameOverCallback = gameOverCallback;
        
     }
@@ -177,11 +177,11 @@ export class GameService{
 
 
     public async startGame(){
-        console.log("START GAME ||||||||||||");
+        // console.log("START GAME ||||||||||||");
         // this.isRunning = true
         this.sendStart();
-        console.log("client1: ", this.client1.id);
-        console.log("client2: ", this.client2.id);
+        // console.log("client1: ", this.client1.id);
+        // console.log("client2: ", this.client2.id);
         
         Runner.run(this.runner, this.engine);
         Composite.add(this.engine.world, [this.p1, this.p2 , ...this.grounds, ...this.obstacles]);
@@ -194,7 +194,9 @@ export class GameService{
             event.pairs.forEach((pair)=>{
                 const bodyA :Body = pair.bodyA;
                 const bodyB : Body = pair.bodyB;
-                if ((this.ball.velocity.x <= 0.1 && this.ball.velocity.x >= -0.1) || (this.ball.velocity.y <= 0.1 && this.ball.velocity.y >= -0.01))console.log("v.x: ", this.ball.velocity.x, " v.y: ", this.ball.velocity.y);
+                if ((this.ball.velocity.x <= 0.5 && this.ball.velocity.x >= -0.5) || 
+                        (this.ball.velocity.y <= 0.5 && this.ball.velocity.y >= -0.5))
+                    Body.setVelocity(this.ball, {x: this.ball.velocity.x + 0.5, y: this.ball.velocity.y + 0.5})
                 
                 if (bodyA === this.ball || bodyB == this.ball){
                     const normal = pair.collision.normal;
@@ -211,8 +213,8 @@ export class GameService{
                     if (otherBody.label === "TOP" || otherBody.label === "DOWN"){
                         if (otherBody.label === "TOP")          this.score1++;
                         else if (otherBody.label === "DOWN")    this.score2++;
-                        console.log(this.user1Dto.username , " : Score: ", this.score1);
-                        console.log(this.user2Dto.username , " : Score: ", this.score2);
+                        // console.log(this.user1Dto.username , " : Score: ", this.score1);
+                        // console.log(this.user2Dto.username , " : Score: ", this.score2);
                         
                         Body.setPosition(this.ball, { x: 300, y: 400 });
                         Body.setVelocity(this.ball, { x: this.ball.velocity.x < 0 ? 5 : -5 , y: this.ball.velocity.y > 0 ? 5:  -5});
@@ -221,7 +223,7 @@ export class GameService{
             });
             if (this.score1 === this.maxScore || this.score2 === this.maxScore ){
                 this.stop();
-                console.log("MAX:" , this.maxScore);
+                // console.log("MAX:" , this.maxScore);
                 
                 let winnerUser : UserDto;
                 let looserUser : UserDto;
@@ -307,7 +309,6 @@ export class GameService{
 
     }   
 
-    public
     public setPlayer1(sock: Socket, id: string){
         this.player1Id = id;
         this.client1 = sock;
@@ -315,7 +316,6 @@ export class GameService{
     public setPlayer2([sock, user]: [Socket, UserDto], id: string){
         this.player2Id = id;
         this.user2Dto = user;
-        console.log("added id : ", id);
         
         this.client2 = sock;
     }
