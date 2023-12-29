@@ -612,7 +612,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
               const sender = await this.user.getUserById(message.senderId);
               const reciever = await this.user.getUserByUsername(message.recieverId);;
               
-              if (_user.bandUsers.includes(reciever.id) || _user.bandBy.includes(reciever.id)) {
+              if (_user.bandUsers.includes(reciever.id) || _user.bandBy.includes(reciever.id) || sender.id == reciever.id) {
                 client.emit("ERROR", "can't send message to this user ....")
                 return
               }
