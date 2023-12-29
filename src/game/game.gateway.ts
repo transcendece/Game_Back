@@ -153,9 +153,8 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
 
             let userdto: UserDto = this.clients.get(client.id)[1]
             this.clients.get(client.id)[0].emit("WAIT", {map: req.map})
-            console.log("RANDOM..... : ", userdto.id);
             if (!userdto)
-                console.log("RANDOM : userdto NOT VALID");
+                return ;
 
             this.createRandomGame(client.id , req.map);
         console.log("end RANDOM.....");
@@ -194,6 +193,24 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
             this.Random.get(req.gameId).stop;
             client.id === this.Random.get(req.gameId).client1.id ? this.Random.get(req.gameId).client2.emit("GAMEOVER"): this.Random.get(req.gameId).client1.emit("GAMEOVER");
             this.Random.get(req.gameId).stop()
+            this.Random.get(req.gameId).user1Dto.id
+
+            await this.prisma.user.update({
+                where : {
+                    id : this.Random.get(req.gameId).user1Dto.id,
+                },
+                data : {
+                    inGame : false,
+                }
+            })
+            await this.prisma.user.update({
+                where : {
+                    id : this.Random.get(req.gameId).user2Dto.id,
+                },
+                data : {
+                    inGame : false,
+                }
+            })
             this.Random.delete(req.gameId);
         }
     }
