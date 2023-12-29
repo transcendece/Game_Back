@@ -373,6 +373,7 @@ import { email } from "valibot";
 import { ConversationDto } from "src/DTOs/conversation/conversation.dto";
 import { log } from "console";
 import { User } from "@prisma/client";
+import { frontData } from "src/DTOs/chat/conversation.dto";
 
 @WebSocketGateway(8888, {
   cors: {
@@ -596,26 +597,154 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
 
       @SubscribeMessage('newMessage')
       async handleNewConversation(@MessageBody() message: messageDto, @ConnectedSocket() client : Socket) {
-        console.log("creating new conversation : ", message);
-        let cookie : string = client.client.request.headers.cookie;
-            if (cookie) {
-              const jwt:string = cookie.substring(cookie.indexOf('=') + 1)
-              let user;
-              user =  this.jwtService.verify(jwt)
-              if (user) {
+        try{
+          let cookie : string = client.client.request.headers.cookie;
+          if (cookie) {
+            const jwt:string = cookie.substring(cookie.indexOf('=') + 1)
+            let user;
+            user =  this.jwtService.verify(jwt)
+            if (user) {
               let _user : UserDto = await this.user.getUserByUsername(message.recieverId)
-                if (!_user) {
-                  client.emit('ERROR', `No such Nick ${message.recieverId}`)
+              if (!_user) {
+                client.emit('ERROR', `No such Nick ${message.recieverId}`)
+                return
+              }
+              const sender = await this.user.getUserById(message.senderId);
+              const reciever = await this.user.getUserByUsername(message.recieverId);;
+              
+              if (_user.bandUsers.includes(reciever.id) || _user.bandBy.includes(reciever.id)) {
+                client.emit("ERROR", "can't send message to this user ....")
+                return
+              }
+              let senderConversations : ConversationDto[] = await this.conversation.getConversations(sender.id)
+              let recieverConversations : ConversationDto[] = await this.conversation.getConversations(reciever.id)
+              console.log("sender len : ", senderConversations.length)
+              console.log("reciever len : ", recieverConversations.length)
+              console.log("creating new conversation : ", message);
+                let conversationExist : ConversationDto = await this.conversation.conversationExist(sender.id, reciever.id)
+                if (conversationExist) {
+                  // await this.hanldeMessage(message, )
+                  client.emit("RecieveMessage", {
+                    isOwner : true,
+                    content : message.content,
+                    avatar : sender.avatar,
+                    senderId : sender.id,
+                    sender : sender.username,
+                    reciever : reciever.username,
+                    recieverId : reciever.id,
+                    date : conversationExist.updatedAt,
+                    conversationId : conversationExist.id,
+                  })
+                  let recieverSocket : Socket = this.clientsMap.get(reciever.id)
+                  if (recieverSocket) {
+                    recieverSocket.emit("RecieveMessage", {
+                      isOwner : false,
+                      content : message.content,
+                      avatar : sender.avatar,
+                      senderId : sender.id,
+                      sender : sender.username,
+                      reciever : reciever.username,
+                      recieverId : reciever.id,
+                      date : conversationExist.updatedAt,
+                      conversationId : conversationExist.id,
+                    })
+                  }
                   return
                 }
+                const tmp : ConversationDto = await this.conversation.createConversation(reciever.id, sender.id)
                 message.recieverId = _user.id;
-                await this.hanldeMessage(message, client);
+                console.log("emiiting new conv , ",
+                {
+                  Conversationid : tmp.id,
+                  avatar : reciever.avatar,
+                  username : reciever.username,
+                  senderId : sender.id,
+                  sender : sender.username,
+                  reciever : reciever.username,
+                  recieverId : reciever.id,
+                  online : reciever.online,
+                  updatedAt : tmp.updatedAt,
+                  messages : [
+                    {
+                      isOwner : true,
+                      content : message.content,
+                      avatar : sender.avatar,
+                      senderId : sender.id,
+                      sender : sender.username,
+                      reciever : reciever.username,
+                      recieverId : reciever.id,
+                      date : tmp.updatedAt,
+                      conversationId : tmp.id,
+                    }
+                  ]
+                }
+                );
+                
+                client.emit("NewConversation",{
+                  Conversationid : tmp.id,
+                  id      : senderConversations.length,
+                  avatar : reciever.avatar,
+                  username : reciever.username,
+                  senderId : sender.id,
+                  sender : sender.username,
+                  reciever : reciever.username,
+                  recieverId : reciever.id,
+                  online : reciever.online,
+                  updatedAt : tmp.updatedAt,
+                  messages : [
+                    {
+                      isOwner : true,
+                      content : message.content,
+                      avatar : sender.avatar,
+                      senderId : sender.id,
+                      sender : sender.username,
+                      reciever : reciever.username,
+                      recieverId : reciever.id,
+                      date : tmp.updatedAt,
+                      conversationId : tmp.id,
+                    }
+                  ]
+                })
+                let recieverSocket = this.clientsMap.get(reciever.id)
+                if (recieverSocket) {
+                  recieverSocket.emit("NewConversation",{
+                    Conversationid : tmp.id,
+                    id : recieverConversations.length,
+                    avatar : sender.avatar,
+                    username : sender.username,
+                    senderId : reciever.id,
+                    sender : reciever.username,
+                    reciever : sender.username,
+                    recieverId : sender.id,
+                    online : sender.online,
+                    updatedAt : tmp.updatedAt,
+                    messages : [
+                      {
+                        isOwner : false,
+                        content : message.content,
+                        avatar : sender.avatar,
+                        senderId : sender.id,
+                        sender : sender.username,
+                        reciever : reciever.username,
+                        recieverId : reciever.id,
+                        date : tmp.updatedAt,
+                        conversationId : tmp.id,
+                      }
+                    ]
+                  })
+                }
+                message.conversationId = tmp.id
+                await this.message.CreateMesasge(message);
+                // await this.hanldeMessage(message, client);
                 //const tmp = await this.conversation.createConversation(_user.id, user.sub)
                 //message.conversationId = tmp.id;
                 //message.senderId = user.sub;
                 //message.recieverId = _user.id;
                 //this.sendToSocket(message)
               }
+            }} catch (error) {
+              console.log("error, :" , error);
+              client.emit("ERROR", "error ...")
             }
       }
 
@@ -624,7 +753,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
         async hanldeMessage(@MessageBody() message: messageDto, @ConnectedSocket() client : Socket) {
           try {
             console.log("sendMessage data : ", message);
-            
+;
             let cookie : string = client.client.request.headers.cookie;
             if (cookie) {
               const jwt:string = cookie.substring(cookie.indexOf('=') + 1)
@@ -659,8 +788,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
                   await this.sendToSocket(message, sender.username); 
                 }
                 else {
-                  const tmp = await this.conversation.createConversation(reciever.id, sender.id)
-                  message.conversationId = tmp.id;
+                  const tmp : ConversationDto = await this.conversation.createConversation(reciever.id, sender.id)
+                  console.log("sent new conver .....");
                   await this.sendToSocket(message, sender.username);
                 }
               }
@@ -685,7 +814,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
             await this.message.CreateMesasge(message);
             if (socket) {
               this.conversation.updateConversationDate(message.conversationId)
-              console.log("data -------------> : ", message);
+              // console.log("data -------------> : ", message);
               
               let data : chatDto = new chatDto;
               data.content = message.content
