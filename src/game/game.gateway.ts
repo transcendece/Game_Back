@@ -240,13 +240,13 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
 
     @SubscribeMessage("UPDATE")
     async updatePaddle(@MessageBody() req: {gameId: string, vec: Vector }, @ConnectedSocket() client : Socket){
-        // console.log("UPDATE ....");
+        console.log("UPDATE ....");
         try{
             // console.log("cliend sending the request : ", req);
 
             let userdto: UserDto = this.clients.get(client.id)[1]
             let game: GameService = this.Random.get(req.gameId);
-          // console.log("req UPDATE: ", req, " ", userdto.id);
+        //   console.log("req UPDATE: ", req, " ", userdto.id);
             if (!userdto)
                 {console.log("UPDATE : userdto NOT VALID");throw "invalid user"}
             // console.log("GAMEEEES:",game);
