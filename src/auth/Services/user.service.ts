@@ -17,7 +17,6 @@ export class UserService {
         }
         catch (error) {
             console.log("error ...");
-            
         }
     }
 

@@ -398,20 +398,20 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
 
     async handleConnection(client: Socket, ...args: any[]) {
       try {
-        console.log("new connection ....");
+        // console.log("new connection ....");
         
             let cookie : string = client.client.request.headers.cookie;
-            console.log("00000000000 cookie 00000000000 >>>>> ",cookie);
+            // console.log("00000000000 cookie 00000000000 >>>>> ",cookie);
             
             if (cookie) {
               const jwt:string = cookie.substring(cookie.indexOf('=') + 1)
               let user;
               user =  this.jwtService.verify(jwt);
-              console.log(user)
+              // console.log(user)
               if (user) {
                 const test = await this.user.getUserById(user.sub);
                 if (test) {
-                  console.log("map :=====>",this.clientsMap.has(test.id));
+                  // console.log("map :=====>",this.clientsMap.has(test.id));
                   let exist : boolean = this.clientsMap.has(test.id);
                   if (exist)
                   {
@@ -426,16 +426,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
               }
             }
           else {
-            console.log("user dosen't exist in database");
+            // console.log("user dosen't exist in database");
             client.emit('ERROR', "RAH KAN3REF BAK, IHCHEM")
             client.disconnect();
           }
         }
         catch (error) {
-          console.log("user dosen't exist in database");
+          // console.log("user dosen't exist in database");
           client.emit('ERROR', "RAH KAN3REF BAK, IHCHEM")
           client.disconnect()
-          console.log("invalid data : check JWT or DATABASE QUERIES")
+          // console.log("invalid data : check JWT or DATABASE QUERIES")
       }
   }
 
@@ -449,11 +449,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
             if (user) {
               const test = await this.user.getUserById(user.sub)
               if (test) {
-                console.log(test.id);
+                // console.log(test.id);
                 // await this.user.updateUserOnlineStatus(false, test.id)
-                console.log(`this is a test : ${test.id} ****`)
+                // console.log(`this is a test : ${test.id} ****`)
               }
-              console.log("disconnected : ", user.sub);
+              // console.log("disconnected : ", user.sub);
               this.clientsMap.delete(user.sub);
             }
           }
@@ -465,14 +465,14 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
       @SubscribeMessage('channelMessage')
       async handleChannelMessage(@MessageBody() message: channelMessageDto,@ConnectedSocket() client : Socket) {
         try {
-          console.log("0 ===> ", message);
+          // console.log("0 ===> ", message);
           let cookie : string = client.client.request.headers.cookie;
           if (cookie) {
             const jwt:string = cookie.substring(cookie.indexOf('=') + 1)
             let user;
             user = await this.jwtService.verify(jwt);
             if (user) {
-              console.log("1");
+              // console.log("1");
               
               const _user = await this.user.getUserById(user.sub)
               if (_user) {
@@ -485,7 +485,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
                     channelId = tmpChannel.id;
                   }
                   let check : boolean = await this.channel.canSendMessageToChannel(_user.id, message.channelName)
-                  console.log("has privilage to send on channel :", check);
+                  // console.log("has privilage to send on channel :", check);
                   
                   let sent : boolean = false;
                   if (check) {
@@ -525,15 +525,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
         try {
           
           // need to check if the user is already in game or not before sending the notification 
-          console.log("recieverd on Invite : ", recieverId);
+          // console.log("recieverd on Invite : ", recieverId);
           
           let cookie : string = client.client.request.headers.cookie;
           if (cookie) {
             const jwt:string = cookie.substring(cookie.indexOf('=') + 1)
             let user;
             user =  this.jwtService.verify(jwt);
-            console.log("reciever : ", recieverId);
-            console.log("ahjkhadfhadjkfhadjhf : ", user);
+            // console.log("reciever : ", recieverId);
+            // console.log("ahjkhadfhadjkfhadjhf : ", user);
             
             if (user) {
               let customer : Socket = this.clientsMap.get(recieverId)
@@ -552,7 +552,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
       @SubscribeMessage('GameInvite')
       async HandleGame(@MessageBody() res : {state: string, recieverId: string, senderId: string}, @ConnectedSocket() client : Socket) {
         try {
-          console.log("creating game : ", res.state);
+          // console.log("creating game : ", res.state);
           let cookie : string = client.client.request.headers.cookie;
           if (cookie) {
             let playerA : Socket;
@@ -588,7 +588,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
                 client.emit("ERROR", "invitation Declined ...")
               }
             }
-            console.log("received in GameInvite : ", res.senderId,"   ", res.recieverId);
+            // console.log("received in GameInvite : ", res.senderId,"   ", res.recieverId);
           }
         } catch (error) {
           client.emit("ERROR", "TRY AGAIN LATER ....")
@@ -618,9 +618,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
               }
               let senderConversations : ConversationDto[] = await this.conversation.getConversations(sender.id)
               let recieverConversations : ConversationDto[] = await this.conversation.getConversations(reciever.id)
-              console.log("sender len : ", senderConversations.length)
-              console.log("reciever len : ", recieverConversations.length)
-              console.log("creating new conversation : ", message);
+              // console.log("sender len : ", senderConversations.length)
+              // console.log("reciever len : ", recieverConversations.length)
+              // console.log("creating new conversation : ", message);
                 let conversationExist : ConversationDto = await this.conversation.conversationExist(sender.id, reciever.id)
                 if (conversationExist) {
                   // await this.hanldeMessage(message, )
@@ -653,32 +653,32 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
                 }
                 const tmp : ConversationDto = await this.conversation.createConversation(reciever.id, sender.id)
                 message.recieverId = _user.id;
-                console.log("emiiting new conv , ",
-                {
-                  Conversationid : tmp.id,
-                  avatar : reciever.avatar,
-                  username : reciever.username,
-                  senderId : sender.id,
-                  sender : sender.username,
-                  reciever : reciever.username,
-                  recieverId : reciever.id,
-                  online : reciever.online,
-                  updatedAt : tmp.updatedAt,
-                  messages : [
-                    {
-                      isOwner : true,
-                      content : message.content,
-                      avatar : sender.avatar,
-                      senderId : sender.id,
-                      sender : sender.username,
-                      reciever : reciever.username,
-                      recieverId : reciever.id,
-                      date : tmp.updatedAt,
-                      conversationId : tmp.id,
-                    }
-                  ]
-                }
-                );
+                // console.log("emiiting new conv , ",
+                // {
+                //   Conversationid : tmp.id,
+                //   avatar : reciever.avatar,
+                //   username : reciever.username,
+                //   senderId : sender.id,
+                //   sender : sender.username,
+                //   reciever : reciever.username,
+                //   recieverId : reciever.id,
+                //   online : reciever.online,
+                //   updatedAt : tmp.updatedAt,
+                //   messages : [
+                //     {
+                //       isOwner : true,
+                //       content : message.content,
+                //       avatar : sender.avatar,
+                //       senderId : sender.id,
+                //       sender : sender.username,
+                //       reciever : reciever.username,
+                //       recieverId : reciever.id,
+                //       date : tmp.updatedAt,
+                //       conversationId : tmp.id,
+                //     }
+                //   ]
+                // }
+                // );
                 
                 client.emit("NewConversation",{
                   Conversationid : tmp.id,
@@ -743,7 +743,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
                 //this.sendToSocket(message)
               }
             }} catch (error) {
-              console.log("error, :" , error);
+              // console.log("error, :" , error);
               client.emit("ERROR", "error ...")
             }
       }
@@ -752,7 +752,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
       @SubscribeMessage('SendMessage')
         async hanldeMessage(@MessageBody() message: messageDto, @ConnectedSocket() client : Socket) {
           try {
-            console.log("sendMessage data : ", message);
+            // console.log("sendMessage data : ", message);
 ;
             let cookie : string = client.client.request.headers.cookie;
             if (cookie) {
@@ -762,13 +762,13 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
               if (user) {
                   const sender = await this.user.getUserById(message.senderId);
                   const reciever = await this.user.getUserById(message.recieverId);
-                  console.log("sender object : ", sender);
-                  console.log("reciever object : ", reciever);
+                  // console.log("sender object : ", sender);
+                  // console.log("reciever object : ", reciever);
                   
-                  console.log("ggogogoogogogogoog : ", message.recieverId, "     ",  message.senderId);
+                  // console.log("ggogogoogogogogoog : ", message.recieverId, "     ",  message.senderId);
                   if (!sender || !reciever || (message.senderId == message.recieverId)) {
                     client.emit("ERROR", "YOU CAN't Text yourself Go buy a Note Book !")
-                    console.log('here 11111');
+                    // console.log('here 11111');
                     return ;
                   }
                   if (reciever.bandUsers.includes(sender.id)) {
@@ -778,18 +778,18 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
                   if (achievementCheck > 0) {
                     if (!sender.achievements.includes('https://res.cloudinary.com/dvmxfvju3/image/upload/v1699322994/vp6r4ephqymsyrzxgd0h.png')) {
                       await this.user.updateAcheivement('https://res.cloudinary.com/dvmxfvju3/image/upload/v1699322994/vp6r4ephqymsyrzxgd0h.png', sender.id)
-                      console.log('added first message')
+                      // console.log('added first message')
                   }
                 }
                 let conversations : string = await this.conversation.findConversations(reciever.id, sender.id);
-                console.log("conversations ----------> : ", conversations);
+                // console.log("conversations ----------> : ", conversations);
                 if (conversations.length > 0) {
                   message.conversationId = conversations;
                   await this.sendToSocket(message, sender.username); 
                 }
                 else {
                   const tmp : ConversationDto = await this.conversation.createConversation(reciever.id, sender.id)
-                  console.log("sent new conver .....");
+                  // console.log("sent new conver .....");
                   await this.sendToSocket(message, sender.username);
                 }
               }
@@ -799,16 +799,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
         }
         }
         catch (error) {
-          console.log(error)
+          // console.log(error)
         }
       }
       
       async sendToSocket(message: messageDto, Sender : string) {
         try {
-          console.log('message in send socket : ',message)
+          // console.log('message in send socket : ',message)
           let _reciever : UserDto = await this.user.getUserById(message.recieverId)
           let _sender : UserDto = await this.user.getUserByUsername(Sender)
-          console.log("reciever is : ", _reciever);
+          // console.log("reciever is : ", _reciever);
           if (_reciever && _sender && !_reciever.bandBy.includes(_sender.id) && !_reciever.bandUsers.includes(_sender.id)) {
             const socket: Socket = this.clientsMap.get(_reciever.id);
             await this.message.CreateMesasge(message);

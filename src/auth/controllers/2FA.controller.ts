@@ -32,12 +32,12 @@ export class TwoFAConroller {
         let user = req.user;
         const id = user.id;
         const Pin = body.code;
-        console.log(body)
-        console.log("pin : ", Pin);
+        // console.log(body)
+        // console.log("pin : ", Pin);
 
-        console.log("ZEBIIII", body.code);
+        // console.log("ZEBIIII", body.code);
 
-        console.log(`hello : ${body.code}, hello : ${id}`)
+        // console.log(`hello : ${body.code}, hello : ${id}`)
         try {
 
             user = await this.userService.getUser(id);

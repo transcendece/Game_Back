@@ -192,6 +192,7 @@ import { UserDto } from 'src/DTOs/User/user.dto';
 import { UserData } from 'src/DTOs/User/user.profileData';
 import { AchievementDto } from 'src/DTOs/achievement/achievement.dto';
 import { FriendDto } from 'src/DTOs/friends/friend.dto';
+import { InviteDto } from 'src/DTOs/invitation/invite.dto';
 import { JwtAuth } from 'src/auth/Guards/jwt.guard';
 import { AchievementRepository } from 'src/modules/achievement/achievement.repository';
 import { FriendsRepository } from 'src/modules/friends/friends.repository';
@@ -389,6 +390,7 @@ export class ProfileController {
     @UseGuards(JwtAuth)
     async addFriend(@Body() data : FriendDto, @Req() req: Request & {user: UserDto}) : Promise<FriendDto> {
         console.log(req.user)
+        // let invites : InviteDto[] = await this.invite.getInvite()
         return this.friend.createFriend(data, req.user.id)
     }
 }

@@ -719,7 +719,7 @@ export class ChatController {
     @UseGuards(JwtAuth)
     async  leaveChannel(@Req() req: Request & {user : UserDto}, @Res() res: Response, @Body('channelName') channelName : string) {
         let check : boolean = await this.channel.leaveChannel(req.user.id, channelName)
-        console.log("left : ", check);
+        // console.log("left : ", check);
         if (check) {
             res.status(200).json(channelName)
         }
@@ -749,11 +749,11 @@ export class ChatController {
     @UseGuards(JwtAuth)
     async getChannelsMessages(@Req() req: Request & {user : UserDto}, @Body('_channel') _channel : string, @Res() res: Response) : Promise<any> {
         try {
-            console.log("recieved : ",_channel);
+            // console.log("recieved : ",_channel);
             let data : channelMessageDto[] =  await this.channel.getChannelMessages(_channel, req.user.id)
             res.status(200).json(data);
         } catch (error) {
-            console.log("erroriiiiiii ");
+            // console.log("erroriiiiiii ");
             res.status(400).json("no channel");
         }
     }
@@ -768,7 +768,7 @@ export class ChatController {
                 return ;
             }
             let data = await this.channel.getChannelSettingsData(req.user.id);
-            console.log("final data : ", data);
+            // console.log("final data : ", data);
             res.status(200).json(data)
         }
         catch (error) {
@@ -874,36 +874,37 @@ export class ChatController {
     @UseGuards(JwtAuth)
     async SendInvitation(@Body('username') username : string, @Req() req: Request & {user : UserDto}, @Res() res: Response) : Promise<any> { //check here ////////
         try {
-            if (req.user.username == username) {
-                res.status(400).json("Sir tel3eb")
+                console.log("Data recieved in invite : ", username);
+                if (req.user.username == username) {
+                    res.status(400).json("Sir tel3eb")
+                    return 
+                }
+                let invitation : InviteDto = {
+                    invitationRecieverId : "",
+                    invitationSenderId : "",
+                    inviteStatus : 0,
+                }
+                let tmpUser : UserDto = await this.user.getUserByUsername(username)
+                if (!tmpUser) {
+                    res.sendStatus(400).json("no invite")
+                    return 
+                }
+                invitation.invitationSenderId = req.user.id;
+                invitation.invitationRecieverId  = tmpUser.id;
+                let tmp : InviteDto = await this.invite.createInvite(invitation);
+                if (!tmp) {
+                    console.log("invitation not created ..........");
+                    res.status(400).json("Already friends .")
+                    return 
+                }
+                else {
+                    console.log("succes");
+                    res.status(200).json(tmp)
+                }
                 return 
-            }
-            let invitation : InviteDto = {
-                invitationRecieverId : "",
-                invitationSenderId : "",
-                inviteStatus : 0,
-            }
-            let tmpUser : UserDto = await this.user.getUserByUsername(username)
-            if (!tmpUser) {
-                res.sendStatus(400).json("no invite")
-                return 
-            }
-            invitation.invitationSenderId = req.user.id;
-            invitation.invitationRecieverId  = tmpUser.id;
-            let tmp : InviteDto = await this.invite.createInvite(invitation);
-            if (tmp == null) {
-                res.status(400).json("Already friends .")
-                return 
-            }
-            else {
-                console.log("succes");
-                res.status(200).json(tmp)
-                return 
-            }
-            
             }
         catch (error) {
-            console.log(error);
+            // console.log(error);
             res.status(400).json({message : "Error ..."})
         }
     }
@@ -919,7 +920,7 @@ export class ChatController {
                 "password" : password,
             });
             if (test) {
-                console.log("created channel : ", test);
+                // console.log("created channel : ", test);
                 if (!req.user.achievements.includes('https://res.cloudinary.com/dvmxfvju3/image/upload/v1699323620/qodwzbr6cxd74m14i4ad.png'))
                     this.user.updateAcheivement('https://res.cloudinary.com/dvmxfvju3/image/upload/v1699323620/qodwzbr6cxd74m14i4ad.png', req.user.id)
                 res.status(200).json({"channelName": test.name, "users" : [], "bandUsers": [], "admins": [req.user.username], "mutedUsers" : []})
@@ -963,7 +964,7 @@ export class ChatController {
             let requester : UserDto = await this.user.getUserById(req.user.id)
             if (userTounBan && requester && requester.bandUsers.includes(userTounBan.id)) {
                 let tmp :string = await this.channel.unBanUser(req.user, userTounBan)
-                console.log(tmp);
+                // console.log(tmp);
                 res.status(200).json({username : userTounBan,action : "unBan"})
             }
             else
@@ -978,12 +979,12 @@ export class ChatController {
     async muteUser(@Req() req: Request & {user : UserDto}, @Body('channelName') channelName : string, @Body('username') username : string, @Res() res: Response) : Promise<any> {
         try { 
             let check : boolean = await this.channel.muteUser(username, channelName, req.user.id)
-            console.log("check : ", check, " data : ", username ,  " , ", channelName);
+            // console.log("check : ", check, " data : ", username ,  " , ", channelName);
             if (check){
-                console.log('mute 1');
+                // console.log('mute 1');
                 res.status(200).json(username)
             } else {
-                console.log('mute 2');
+                // console.log('mute 2');
                 res.status(400).json(username)
             }
         } catch (error) {
@@ -1007,8 +1008,7 @@ export class ChatController {
                 res.status(400).json(username)
             }
         catch (error){
-            console.log(error);
-            
+            // console.log(error);
             res.status(400).json(username)
         } 
     }
@@ -1033,8 +1033,7 @@ export class ChatController {
     @UseGuards(JwtAuth)
     async   banUserFromChannel(@Req() req: Request & {user : UserDto}, @Body() data: channelParams, @Res() res: Response) {
         try {
-            console.log("ban user from channel data : ", data);
-            
+            // console.log("ban user from channel data : ", data);
             let check : boolean = await this.channel.banUserFromChannel(data.username, data.channelName, req.user.id)
             if (check)
                 res.status(200).json(data.username)
@@ -1082,7 +1081,7 @@ export class ChatController {
     @Post('joinChannel')
     @UseGuards(JwtAuth)
     async joinChannelRequest(@Req() req: Request & {user : UserDto}, @Body('channelName') channelName : string, @Body('password') password : string, @Res() res: Response) : Promise<any> {
-        console.log("=======> ", channelName , password);
+        // console.log("=======> ", channelName , password);
         let check : boolean = await this.channel.JoinUserToChannel(req.user.id, channelName, password)
         if (check) {
             if (!req.user.achievements.includes("https://res.cloudinary.com/dvmxfvju3/image/upload/v1699049653/qwt5g7xtl2aqybw77drz.png")) {
@@ -1099,19 +1098,19 @@ export class ChatController {
     @UseGuards(JwtAuth)
     async accepteInvite(@Req() req: Request & {user : UserDto}, @Body('username') username : string, @Res() res: Response) : Promise<any> {
         try {
-            console.log('at least got here ??');
+            // console.log('at least got here ??');
             
             let tmpUser : UserDto = await (await this.user.getUserByUsername(username))
             let invitationSenderId : string = tmpUser.id
             let invitationRecieverId : string = req.user.id
             
             let tmp : InviteDto = await this.invite.getInviteToValidate(invitationSenderId, invitationRecieverId);
-            console.log("tmp ===> : ",tmp);
+            // console.log("tmp ===> : ",tmp);
             if (!tmp) {
                 res.status(400).json("no Invite to accepte")
                 return
             }
-            console.log("invite ====> ", username);
+            // console.log("invite ====> ", username);
             await this.invite.deleteInvite(tmp.id);
             let data : FriendDto = await this.friend.createFriend(new FriendDto(invitationRecieverId, invitationSenderId, ''), req.user.id)
             res.status(200).json({username : username, action : "addFriend", id : tmpUser.id});
@@ -1127,7 +1126,7 @@ export class ChatController {
     async   addAdminToChannel(@Req() req : Request & {user : UserDto},  @Body() data: channelParams, @Res() res: Response) {
         try {
             let check : boolean = await this.channel.AddAdminToChannel(data.username, data.channelName, req.user.id)
-            console.log("addAdminToChannel : ", check);
+            // console.log("addAdminToChannel : ", check);
             if (check)
                 res.status(200).json(data.username)
             else
@@ -1158,8 +1157,7 @@ export class ChatController {
         try {
             let channel : channelDto = await this.channel.getChannelByName(channelData.name)
             if (channel && channel.owner == req.user.id) {
-                console.log("password to channel : ", channelData.password);
-                
+                // console.log("password to channel : ", channelData.password);
                 await this.channel.setPasswordToChannel(channelData.password, channelData.name)
             }
             res.status(200).json("added Pass")
