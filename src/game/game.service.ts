@@ -111,17 +111,17 @@ export class GameService{
         if (this.map === "ADVANCED")
         {
             this.obstacles = AdvancedObs;
-            this.maxVelocity = 15;
+            this.maxVelocity = 13;
             this.maxScore = 7;
             
         }
         else if (this.map === "INTEMIDIER"){
             this.obstacles = IntemidierObs
-            this.maxVelocity = 12
+            this.maxVelocity = 10
             this.maxScore = 5;
         }
         else if (this.map === "BEGINNER"){
-            this.maxVelocity = 6
+            this.maxVelocity = 7
             this.maxScore = 3;
        }
     //    console.log("MAXSXORE: ", this.maxScore);
@@ -194,9 +194,7 @@ export class GameService{
             event.pairs.forEach((pair)=>{
                 const bodyA :Body = pair.bodyA;
                 const bodyB : Body = pair.bodyB;
-                if ((this.ball.velocity.x <= 0.5 && this.ball.velocity.x >= -0.5) || 
-                        (this.ball.velocity.y <= 0.5 && this.ball.velocity.y >= -0.5))
-                    Body.setVelocity(this.ball, {x: this.ball.velocity.x + 0.5, y: this.ball.velocity.y + 0.5})
+                
                 
                 if (bodyA === this.ball || bodyB == this.ball){
                     const normal = pair.collision.normal;
@@ -304,6 +302,9 @@ export class GameService{
                 "score1": this.score1,
                 "score2": this.score2,
             });
+            if ((this.ball.velocity.x <= 0.5 && this.ball.velocity.x >= -0.5) || 
+                        (this.ball.velocity.y <= 0.5 && this.ball.velocity.y >= -0.5))
+                    Body.setVelocity(this.ball, {x: this.ball.velocity.x + 0.5, y: this.ball.velocity.y + 0.5})
             
         });
 
