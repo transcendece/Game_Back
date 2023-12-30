@@ -71,17 +71,13 @@ export class ChannelsService {
 
     async createChannel(ownerId: string, channelData: channelDto) {
       try {
-        console.log("channel Data : ", channelData);
-        console.log(channelData.IsPrivate," , ", channelData.IsProtected, " , " , channelData.password);
         let checkIfChannelExist : channelDto = await this.prisma.channel.findFirst({where : {
         name : channelData.name,
       }})
       if (checkIfChannelExist)
         return null
-      if ((channelData.IsProtected && !channelData.password.length) || channelData.name.length === 0) {
-        console.log("no pass ...");
+      if ((channelData.IsProtected && !channelData.password.length) || channelData.name.length === 0)
         return
-      }
       let _tmp : string[] = ['','']
       if (channelData.IsProtected) {
         _tmp  = await this.hashPassword(channelData.password)
@@ -114,9 +110,7 @@ export class ChannelsService {
         }
       });
       return channel;
-    } catch (error) {
-      console.log('gotchaaa yaa .... : ');
-    }
+    } catch (error) {}
      }
      
      async leaveChannel(userId: string, channelName : string) : Promise<boolean> {
@@ -163,7 +157,6 @@ export class ChannelsService {
             id : channel.id,
           }
         })
-        console.log('deleted channel ....');
         return true
       } 
      }
@@ -228,13 +221,10 @@ export class ChannelsService {
       }
     })
     if (CheckIfUserExitst) {
-      console.log("user already exists ....");
       return false
     }
     if (StoredChannel.IsProtected) {
-      console.log("password , ", password, " stored pass , ", StoredChannel.password);
       let valid : boolean = await this.checkPassword(password, StoredChannel.password)
-      console.log("pass valid : ", valid);
       if (valid) {
         let tmp : channelOnUser = await this.prisma.channelOnUser.create({
           data : {
@@ -255,15 +245,11 @@ export class ChannelsService {
             }
           }
         })
-        if (!tmp) {
-          console.log("user not created ");
+        if (!tmp) 
           return false;
-        }
       }
-      else {
-        console.log("wrong pass ");
+      else 
         return false;
-      }
     }
     else {
       let tmp : channelOnUser = await this.prisma.channelOnUser.create({
@@ -285,7 +271,6 @@ export class ChannelsService {
           }
         }
       })
-      console.log("added : ", tmp);
       if (!tmp)
         return true;
     }
@@ -322,7 +307,6 @@ export class ChannelsService {
       }
     }
   }
-  console.log(data);
   data.forEach((channelData) => {
       let channelSettingsInstance = new _channelSettings();
       channelSettingsInstance.channelName = channelData.channel.name;
@@ -348,7 +332,6 @@ export class ChannelsService {
 
       channelSettingsArray.push(channelSettingsInstance);
   });
-  console.log("data to channel settings :", channelSettingsArray);
   
   return channelSettingsArray;
   }
@@ -359,11 +342,9 @@ export class ChannelsService {
     const salt : string = await bcrypt.genSalt();
     let tmp : string[] = []
     tmp.push(salt);
-    console.log("hash : ", salt);
     
     let pass : string = await bcrypt.hash(password, salt);
     tmp.push(pass)
-    console.log("pass : ", pass);
     return tmp
   }
 
@@ -404,7 +385,6 @@ export class ChannelsService {
             },
           },
         });
-        console.log('deleted ...');
     }
     else {
       return false
@@ -412,7 +392,6 @@ export class ChannelsService {
     return true;
   }
   catch (error) {
-    console.log('error in remove user from channel .... ', error);
     return false;
     }
   }
@@ -430,10 +409,8 @@ export class ChannelsService {
         name : channelName
       }
     })
-    if (!channel || !ToMute) {
-      console.log("1");
+    if (!channel || !ToMute) 
       return false
-    }
     let ToMuteChannelOnUser : channelOnUser = await this.prisma.channelOnUser.findFirst({
       where : {
         userId : ToMute.id,
@@ -446,11 +423,8 @@ export class ChannelsService {
         channelId : channel.id
       }
     })
-    console.log("user to Mute : ", ToMuteChannelOnUser);
-    if (!ToMuteChannelOnUser || ToMuteChannelOnUser.isMuted || ToMuteChannelOnUser.isBanned || ToMuteChannelOnUser.isOwner || !RequesterChannelOnUser || !RequesterChannelOnUser.isAdmin ) {
-      console.log("2");
+    if (!ToMuteChannelOnUser || ToMuteChannelOnUser.isMuted || ToMuteChannelOnUser.isBanned || ToMuteChannelOnUser.isOwner || !RequesterChannelOnUser || !RequesterChannelOnUser.isAdmin ) 
       return false
-    } 
     await this.prisma.channelOnUser.update({
         where: {
           userId_channelId: {
@@ -463,12 +437,9 @@ export class ChannelsService {
           until : new Date(now.getTime() + 5 * 60 * 1000)
         }
       });
-      console.log("3");
       return true;
   }
   catch (error) {
-    console.log('exception in mute ....');
-    console.log(error);
   }
 }
 
@@ -512,15 +483,12 @@ async  KickUserFromChannel(UserToKick: string, channelName: string, requester : 
       return true;
   }
   catch (error) {
-    console.log(error);
   }
 }
 
 
   async createChannelMessage(message : channelMessageDto, channelId : string, senderId : string) : Promise<any> {
-   console.log('message recieved in channel : ',message);
    if (message) {
-     console.log('creating channel message', message);
      return await this.prisma.channelMessage.create({data : {
        sender : message.sender,
        content : message.content,
@@ -617,7 +585,6 @@ async  KickUserFromChannel(UserToKick: string, channelName: string, requester : 
       return true;
     }
     catch (error) {
-      console.log('faced an error while banning a user ...');
       return false
   } 
  }
@@ -665,7 +632,6 @@ async  KickUserFromChannel(UserToKick: string, channelName: string, requester : 
       return true;
   }
     catch (error) {
-      console.log('faced an error while banning a user ...');
       return false
   } 
  }
@@ -713,7 +679,6 @@ async  KickUserFromChannel(UserToKick: string, channelName: string, requester : 
       return true;
   }
     catch (error) {
-      console.log('faced an error while adding and admin in channel ...');
       return false
   } 
  }
@@ -761,7 +726,6 @@ async  KickUserFromChannel(UserToKick: string, channelName: string, requester : 
       return true;
   }
     catch (error) {
-      console.log('faced an error while adding and admin in channel ...');
       return false
   } 
  }
@@ -772,7 +736,6 @@ async  KickUserFromChannel(UserToKick: string, channelName: string, requester : 
 
  async addUserToChannel(userId: string, channelId: string, requester : string): Promise<boolean> {
   try {
-    console.log('adding user to channel ..... userid : ', userId, " channelId : ", channelId);
     const existingUser : UserDto = await this.prisma.user.findUnique({
       where: {
         id: userId,
@@ -828,11 +791,9 @@ async  KickUserFromChannel(UserToKick: string, channelName: string, requester : 
       },
       }
     });
-    console.log("=====> ",channelOnUser);
     
     return true
   } catch (error) {
-    console.error("Error adding user to channel:", error);
     return false
   }
 }
@@ -843,12 +804,10 @@ async  KickUserFromChannel(UserToKick: string, channelName: string, requester : 
  }
 
  async setPasswordToChannel(password: string, channelName : string) {
-    console.log('testing', password);  
     let channel : channelDto = await this.prisma.channel.findFirst({where : { name :channelName}})
     if (channel && password.length) {
       let _tmp : string[] = ['','']
       _tmp  = await this.hashPassword(password)
-      console.log(_tmp);
       return await this.prisma.channel.update({where : {id: channel.id},
       data : {
         IsProtected : true,
@@ -888,7 +847,6 @@ async  KickUserFromChannel(UserToKick: string, channelName: string, requester : 
           bandBy : banList,
         }
       })
-      console.log(check);
       return `user banned succesfully.`
     }
     return `user already banned or dosen't exist.`
@@ -918,14 +876,12 @@ async unBanUser(user: UserDto, ban : UserDto): Promise<string> {
             bandBy : bandBy,
           }
         })
-      console.log(check);
       return `user unbanned succesfully.`
     }
     return `user is not in the ban list.`
 }
 
  async getChannelMessages(channel : string, requester : string) : Promise<channelMessageDto[]> {
-  console.log('getting messages of : ',channel);
   let user : UserDto = await this.prisma.user.findUnique({
     where : {
       id : requester,
@@ -969,10 +925,8 @@ async unBanUser(user: UserDto, ban : UserDto): Promise<string> {
     })
     if (!user || user.isBanned || user.isMuted) {
       if (user.isMuted) {
-        console.log("this user is muted : ", user.userId , " until : ", user.until.getTime());
         let time : Date = new Date();
         let removeMute : boolean = ((time.getTime() - user.until.getTime()) > 0);
-        console.log("removeMute", removeMute);
         if (removeMute) {
           await this.prisma.channelOnUser.update({
             where : {

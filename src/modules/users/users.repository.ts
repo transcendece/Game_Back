@@ -32,12 +32,11 @@ export class UsersRepository {
     }
 
     async getUserById (playerId : string) : Promise<UserDto | null> {
-        // console.log(`playerId : ${playerId}`)
         const data: UserDto = await this.prisma.user.findFirst({where : {
             id : playerId,
         }});
         if (!data)
-            return null; // neeed to throw an error
+            return null;
         return data;
     }
     
@@ -46,7 +45,7 @@ export class UsersRepository {
             username : username,
         }});
         if (!data)
-            return null; // neeed to throw an error
+            return null; 
         return data;
     }
 

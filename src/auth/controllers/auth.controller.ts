@@ -49,13 +49,6 @@ export class AuthController {
         res.redirect(`http://localhost:4000/auth/home`);
     }
 
-    // @Get('home')
-    // @UseGuards(JwtAuth)
-    // async home(@Req() req: Request & {user: UserDto}) {
-    //     // console.log(req.user);
-    //     return ;
-    // }
-
     @Post('logout')
     @UseGuards(JwtAuth)
     async logout(@Res() res : Response, @Req() req : Request & {user : UserDto}) {

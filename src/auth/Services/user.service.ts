@@ -16,7 +16,6 @@ export class UserService {
             return await this.prisma.user.findUnique({where: {id: id}})
         }
         catch (error) {
-            console.log("error ...");
         }
     }
 

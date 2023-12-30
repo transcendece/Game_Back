@@ -124,7 +124,6 @@ export class GameService{
             this.maxVelocity = 7
             this.maxScore = 3;
        }
-    //    console.log("MAXSXORE: ", this.maxScore);
        this.gameOverCallback = gameOverCallback;
        
     }
@@ -177,12 +176,7 @@ export class GameService{
 
 
     public async startGame(){
-        // console.log("START GAME ||||||||||||");
-        // this.isRunning = true
         this.sendStart();
-        // console.log("client1: ", this.client1.id);
-        // console.log("client2: ", this.client2.id);
-        
         Runner.run(this.runner, this.engine);
         Composite.add(this.engine.world, [this.p1, this.p2 , ...this.grounds, ...this.obstacles]);
         this.spownBall();
@@ -211,9 +205,6 @@ export class GameService{
                     if (otherBody.label === "TOP" || otherBody.label === "DOWN"){
                         if (otherBody.label === "TOP")          this.score1++;
                         else if (otherBody.label === "DOWN")    this.score2++;
-                        // console.log(this.user1Dto.username , " : Score: ", this.score1);
-                        // console.log(this.user2Dto.username , " : Score: ", this.score2);
-                        
                         Body.setPosition(this.ball, { x: 300, y: 400 });
                         Body.setVelocity(this.ball, { x: this.ball.velocity.x < 0 ? 5 : -5 , y: this.ball.velocity.y > 0 ? 5:  -5});
                     }
@@ -221,8 +212,6 @@ export class GameService{
             });
             if (this.score1 === this.maxScore || this.score2 === this.maxScore ){
                 this.stop();
-                // console.log("MAX:" , this.maxScore);
-                
                 let winnerUser : UserDto;
                 let looserUser : UserDto;
                 this.score1 === this.maxScore ? 
@@ -277,10 +266,7 @@ export class GameService{
                 this.gameOverCallback(this.id);
             }
         })}
-        catch (error) {
-            console.log("got an error ....");
-            
-        }
+        catch (error) {}
 
 
         

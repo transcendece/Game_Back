@@ -157,11 +157,7 @@ export class GameGeteway implements  OnGatewayConnection, OnGatewayDisconnect {
                 return ;
 
             this.createRandomGame(client.id , req.map);
-        console.log("end RANDOM.....");
-        }catch(error){
-            console.log("ERROR IN RANDOM: ", error);
-
-        }
+        }catch(error){}
     }
 
     @SubscribeMessage("PLAY")
