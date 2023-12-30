@@ -392,7 +392,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect{
               socket.emit('RecieveMessage', data);
             } else {
               this.conversation.updateConversationDate(message.conversationId)
-              console.error(`Socket with ID ${message.recieverId} not found.`);
             }
           }
           }

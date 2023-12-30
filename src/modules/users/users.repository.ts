@@ -36,7 +36,7 @@ export class UsersRepository {
             id : playerId,
         }});
         if (!data)
-            return null;
+            return null; // neeed to throw an error
         return data;
     }
     
@@ -45,7 +45,7 @@ export class UsersRepository {
             username : username,
         }});
         if (!data)
-            return null; 
+            return null; // neeed to throw an error
         return data;
     }
 

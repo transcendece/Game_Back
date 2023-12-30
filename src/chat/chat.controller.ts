@@ -387,14 +387,17 @@ export class ChatController {
         try {
             let channel : channelDto = await this.channel.getChannelByName(channelName);
             let tmpUser : UserDto = await this.user.getUserByUsername(username);
-            let check : boolean;
+            let check : boolean = false;
+            
             if (tmpUser && channel) {
                 check = await this.channel.addUserToChannel(tmpUser.id, channel.id, req.user.id);
             }
-            if (check)
+            if (check) {
                 res.status(200).json(username)
-            else
+            }
+            else {
                 res.status(400).json(username)
+            } 
             }
         catch (error){
             res.status(400).json(username)

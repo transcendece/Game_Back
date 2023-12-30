@@ -76,8 +76,9 @@ export class ChannelsService {
       }})
       if (checkIfChannelExist)
         return null
-      if ((channelData.IsProtected && !channelData.password.length) || channelData.name.length === 0)
+      if ((channelData.IsProtected && !channelData.password.length) || channelData.name.length === 0) {
         return
+      }
       let _tmp : string[] = ['','']
       if (channelData.IsProtected) {
         _tmp  = await this.hashPassword(channelData.password)
@@ -110,7 +111,8 @@ export class ChannelsService {
         }
       });
       return channel;
-    } catch (error) {}
+    } catch (error) {
+    }
      }
      
      async leaveChannel(userId: string, channelName : string) : Promise<boolean> {
@@ -245,11 +247,13 @@ export class ChannelsService {
             }
           }
         })
-        if (!tmp) 
+        if (!tmp) {
           return false;
+        }
       }
-      else 
+      else {
         return false;
+      }
     }
     else {
       let tmp : channelOnUser = await this.prisma.channelOnUser.create({
@@ -409,8 +413,9 @@ export class ChannelsService {
         name : channelName
       }
     })
-    if (!channel || !ToMute) 
+    if (!channel || !ToMute) {
       return false
+    }
     let ToMuteChannelOnUser : channelOnUser = await this.prisma.channelOnUser.findFirst({
       where : {
         userId : ToMute.id,
@@ -423,8 +428,9 @@ export class ChannelsService {
         channelId : channel.id
       }
     })
-    if (!ToMuteChannelOnUser || ToMuteChannelOnUser.isMuted || ToMuteChannelOnUser.isBanned || ToMuteChannelOnUser.isOwner || !RequesterChannelOnUser || !RequesterChannelOnUser.isAdmin ) 
+    if (!ToMuteChannelOnUser || ToMuteChannelOnUser.isMuted || ToMuteChannelOnUser.isBanned || ToMuteChannelOnUser.isOwner || !RequesterChannelOnUser || !RequesterChannelOnUser.isAdmin ) {
       return false
+    } 
     await this.prisma.channelOnUser.update({
         where: {
           userId_channelId: {
@@ -488,6 +494,7 @@ async  KickUserFromChannel(UserToKick: string, channelName: string, requester : 
 
 
   async createChannelMessage(message : channelMessageDto, channelId : string, senderId : string) : Promise<any> {
+
    if (message) {
      return await this.prisma.channelMessage.create({data : {
        sender : message.sender,
