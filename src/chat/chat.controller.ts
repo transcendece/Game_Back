@@ -1157,7 +1157,7 @@ export class ChatController {
         try {
             let channel : channelDto = await this.channel.getChannelByName(channelData.name)
             if (channel && channel.owner == req.user.id) {
-                // console.log("password to channel : ", channelData.password);
+                console.log("channel add pass data : ", channelData.name, channelData.password);
                 await this.channel.setPasswordToChannel(channelData.password, channelData.name)
             }
             res.status(200).json("added Pass")
@@ -1171,6 +1171,7 @@ export class ChatController {
     @Post('removePasswordToChannel')
     async removePasswordToChannel(@Body() data : channelParams , @Req() req: Request & {user : UserDto}, @Res() res: Response) {
         try {
+            console.log("channel remove pass data : ", channelData.name);
             let channel : channelDto = await this.channel.getChannelByName(data.channelName)
             if (channel && channel.owner == req.user.id) {
                 await this.channel.unsetPasswordToChannel(data.channelName)

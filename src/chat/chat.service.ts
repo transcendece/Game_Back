@@ -697,7 +697,7 @@ async  KickUserFromChannel(UserToKick: string, channelName: string, requester : 
       }
     })
 
-    if (!channelOnUser || channelOnUser.isBanned || !_requester || !_requester.isOwner || channelOnUser.isAdmin)
+    if (!channelOnUser || channelOnUser.isBanned || !_requester || !_requester.isAdmin ||  channelOnUser.isAdmin)
       return false;
     await this.prisma.channelOnUser.update({
         where: {
@@ -745,7 +745,7 @@ async  KickUserFromChannel(UserToKick: string, channelName: string, requester : 
       }
     })
 
-    if (!channelOnUser || channelOnUser.isOwner || !_requester || !_requester.isOwner)
+    if (!channelOnUser || channelOnUser.isOwner || !_requester || !_requester.isAdmin)
       return false;
       await this.prisma.channelOnUser.update({
         where: {
